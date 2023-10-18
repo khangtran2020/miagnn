@@ -170,7 +170,7 @@ def read_data(args, history, exist=False):
             if i == 0:
                 table.add_row(f'{key}', f'{subkey}', f'{dct[subkey]}')
             elif i == num_sub_key - 1:
-                table.add_row(f'{key}', f'{subkey}', f'{dct[subkey]}', end_section=True)
+                table.add_row('', f'{subkey}', f'{dct[subkey]}', end_section=True)
             else:
                 table.add_row('', f'{subkey}', f'{dct[subkey]}')
     console.log(table)
