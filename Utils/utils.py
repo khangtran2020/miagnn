@@ -122,7 +122,7 @@ def get_name(args, current_date):
                 'model_type', 'n_layers', 'clip', 'clip_node', 'trim_rule', 'ns', 
                 'sampling_rate', 'att_mode', 'sha_ratio']
     att_keys = ['att_mode', 'seed', 'dataset', 'general_mode', 'general_submode', 'data_mode', 'density', 'sha_ratio',
-                'model_type', 'n_layers', 'clip', 'clip_node', 'trim_rule', 'ns']
+                'model_type', 'n_layers', 'sampling_rate', 'clip', 'clip_node', 'trim_rule', 'ns']
         
     if args.data_mode != 'density': 
         gen_keys.remove('density')
