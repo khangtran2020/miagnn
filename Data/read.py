@@ -14,145 +14,142 @@ def read_data(args, history, exist=False):
         
     info = {}
 
-    with console.status("Getting graph ...") as status_get_graph:
-        graph, list_of_label = get_graph(data_name=args.dataset)
-        graph = dgl.remove_self_loop(graph)
+    graph, list_of_label = get_graph(data_name=args.dataset)
+    graph = dgl.remove_self_loop(graph)
+    x = graph.ndata['feat']
+    y = graph.ndata['label']
+    nodes = graph.nodes()
+    src_edge, dst_edge = graph.edges()
+
+    prop_org = {
+        '# nodes': f'{nodes.size(dim=0)}',
+        '# edges': f'{int(src_edge.size(dim=0) / 2)}',
+        'Average degree': f'{graph.in_degrees().float().mean().item()}',
+        'Node homophily': f'{dgl.node_homophily(graph=graph, y=y)}',
+        '# features':f'{ x.size(dim=1)}',
+        '# labels': f'{y.max().item() + 1 }'
+    }
+    info['original_graph'] = prop_org
+    console.log(f"Done getting graph: :white_check_mark:")
+
+    if args.data_mode == 'density':
+        graph = reduce_desity(g=graph, dens_reduction=args.density)
         x = graph.ndata['feat']
         y = graph.ndata['label']
         nodes = graph.nodes()
         src_edge, dst_edge = graph.edges()
-
-        prop_org = {
-            '# nodes': f'{nodes.size(dim=0)}',
-            '# edges': f'{int(src_edge.size(dim=0) / 2)}',
-            'Average degree': f'{graph.in_degrees().float().mean().item()}',
-            'Node homophily': f'{dgl.node_homophily(graph=graph, y=y)}',
-            '# features':f'{ x.size(dim=1)}',
-            '# labels': f'{y.max().item() + 1 }'
+        prop_reduced = {
+            '# nodes': nodes.size(dim=0),
+            '# edges': int(src_edge.size(dim=0) / 2),
+            'Average degree': graph.in_degrees().float().mean().item(),
+            'Node homophily': dgl.node_homophily(graph=graph, y=y),
+            '# features': x.size(dim=1),
+            '# labels': y.max().item() + 1 
         }
-        info['original_graph'] = prop_org
-        console.log(f"Done getting graph: :white_check_mark:")
+        info['reduced_graph'] = prop_reduced
+        console.log(f"Done reducing density: :white_check_mark:")
 
-    if args.data_mode == 'density':
-        with console.status("Density Reducing ...") as status_density_reduce:
-            graph = reduce_desity(g=graph, dens_reduction=args.density)
-            x = graph.ndata['feat']
-            y = graph.ndata['label']
-            nodes = graph.nodes()
-            src_edge, dst_edge = graph.edges()
-            prop_reduced = {
-                '# nodes': nodes.size(dim=0),
-                '# edges': int(src_edge.size(dim=0) / 2),
-                'Average degree': graph.in_degrees().float().mean().item(),
-                'Node homophily': dgl.node_homophily(graph=graph, y=y),
-                '# features': x.size(dim=1),
-                '# labels': y.max().item() + 1 
-            }
-            info['reduced_graph'] = prop_reduced
-            console.log(f"Done reducing density: :white_check_mark:")
 
-    with console.status("Splitting for train/val/test ...") as status_split:
-        node_split(graph=graph, val_size=0.1, test_size=0.15)
-        args.num_class = len(list_of_label)
-        args.num_feat = x.size(dim=1)
-        graph.ndata['org_id'] = graph.nodes().clone()
+    node_split(graph=graph, val_size=0.1, test_size=0.15)
+    args.num_class = len(list_of_label)
+    args.num_feat = x.size(dim=1)
+    graph.ndata['org_id'] = graph.nodes().clone()
 
-        if exist == False:
-            history['tr_id'] = graph.ndata['train_mask'].tolist()
-            history['va_id'] = graph.ndata['val_mask'].tolist()
-            history['te_id'] = graph.ndata['test_mask'].tolist()
-        else:
-            # rprint(f"History is {exist} to exist, assigning masks according to previous run")
-            del(graph.ndata['train_mask'])
-            del(graph.ndata['val_mask'])
-            del(graph.ndata['test_mask'])
+    if exist == False:
+        history['tr_id'] = graph.ndata['train_mask'].tolist()
+        history['va_id'] = graph.ndata['val_mask'].tolist()
+        history['te_id'] = graph.ndata['test_mask'].tolist()
+    else:
+        # rprint(f"History is {exist} to exist, assigning masks according to previous run")
+        del(graph.ndata['train_mask'])
+        del(graph.ndata['val_mask'])
+        del(graph.ndata['test_mask'])
 
-            id_train = history['tr_id']
-            id_val = history['va_id']
-            id_test = history['te_id']
+        id_train = history['tr_id']
+        id_val = history['va_id']
+        id_test = history['te_id']
 
-            graph.ndata['train_mask'] = torch.LongTensor(id_train)
-            graph.ndata['val_mask'] = torch.LongTensor(id_val)
-            graph.ndata['test_mask'] = torch.LongTensor(id_test)
-        console.log(f"Done splitting train/val/test: :white_check_mark:")
+        graph.ndata['train_mask'] = torch.LongTensor(id_train)
+        graph.ndata['val_mask'] = torch.LongTensor(id_val)
+        graph.ndata['test_mask'] = torch.LongTensor(id_test)
+    console.log(f"Done splitting train/val/test: :white_check_mark:")
 
     if args.data_mode == 'ind':
-        with console.status("Graph splitting ...") as status_splitgraph:
-            if (args.data_mode == 'density') and (args.density == 1.0):
-                g_train, g_val, g_test = graph_split(graph=graph, drop=False)
-            else:
-                g_train, g_val, g_test = graph_split(graph=graph, drop=True)
-            train_mask = torch.zeros(graph.nodes().size(dim=0))
-            val_mask = torch.zeros(graph.nodes().size(dim=0))
-            test_mask = torch.zeros(graph.nodes().size(dim=0))
-            id_intr = g_train.ndata['org_id']
-            id_inva = g_val.ndata['org_id']
-            id_inte = g_test.ndata['org_id']
-            train_mask[id_intr] = 1
-            val_mask[id_inva] = 1
-            test_mask[id_inte] = 1
+        if (args.data_mode == 'density') and (args.density == 1.0):
+            g_train, g_val, g_test = graph_split(graph=graph, drop=False)
+        else:
+            g_train, g_val, g_test = graph_split(graph=graph, drop=True)
+        train_mask = torch.zeros(graph.nodes().size(dim=0))
+        val_mask = torch.zeros(graph.nodes().size(dim=0))
+        test_mask = torch.zeros(graph.nodes().size(dim=0))
+        id_intr = g_train.ndata['org_id']
+        id_inva = g_val.ndata['org_id']
+        id_inte = g_test.ndata['org_id']
+        train_mask[id_intr] = 1
+        val_mask[id_inva] = 1
+        test_mask[id_inte] = 1
 
-            graph.ndata['train_mask'] = train_mask
-            graph.ndata['test_mask'] = val_mask
-            graph.ndata['test_mask'] = test_mask
+        graph.ndata['train_mask'] = train_mask
+        graph.ndata['test_mask'] = val_mask
+        graph.ndata['test_mask'] = test_mask
 
-            graph.ndata['id_intr'] = (torch.zeros(graph.nodes().size(dim=0)) - 1).long()
-            graph.ndata['id_intr'][id_intr] = g_train.nodes().clone().long()
+        graph.ndata['id_intr'] = (torch.zeros(graph.nodes().size(dim=0)) - 1).long()
+        graph.ndata['id_intr'][id_intr] = g_train.nodes().clone().long()
 
-            graph.ndata['id_inte'] = (torch.zeros(graph.nodes().size(dim=0)) - 1).long()
-            graph.ndata['id_inte'][id_inte] = g_test.nodes().clone().long()
+        graph.ndata['id_inte'] = (torch.zeros(graph.nodes().size(dim=0)) - 1).long()
+        graph.ndata['id_inte'][id_inte] = g_test.nodes().clone().long()
 
-            idx = torch.cat((id_intr, id_inva, id_inte), dim=0)
-            graph = graph.subgraph(torch.LongTensor(idx))
-            if (args.submode != 'density') or (args.density != 1.0):
-                graph = drop_isolated_node(graph)
-            
-            x = g_train.ndata['feat']
-            y = g_train.ndata['label']
-            nodes = g_train.nodes()
-            src_edge, dst_edge = g_train.edges()
+        idx = torch.cat((id_intr, id_inva, id_inte), dim=0)
+        graph = graph.subgraph(torch.LongTensor(idx))
+        if (args.submode != 'density') or (args.density != 1.0):
+            graph = drop_isolated_node(graph)
+        
+        x = g_train.ndata['feat']
+        y = g_train.ndata['label']
+        nodes = g_train.nodes()
+        src_edge, dst_edge = g_train.edges()
 
-            prop_train = {
-                '# nodes': f'{nodes.size(dim=0)}',
-                '# edges': f'{int(src_edge.size(dim=0) / 2)}',
-                'Average degree': f'{g_train.in_degrees().float().mean().item()}',
-                'Node homophily': f'{dgl.node_homophily(graph=g_train, y=y)}',
-                '# features':f'{x.size(dim=1)}',
-                '# labels': f'{y.max().item() + 1}'
-            }
+        prop_train = {
+            '# nodes': f'{nodes.size(dim=0)}',
+            '# edges': f'{int(src_edge.size(dim=0) / 2)}',
+            'Average degree': f'{g_train.in_degrees().float().mean().item()}',
+            'Node homophily': f'{dgl.node_homophily(graph=g_train, y=y)}',
+            '# features':f'{x.size(dim=1)}',
+            '# labels': f'{y.max().item() + 1}'
+        }
 
-            x = g_val.ndata['feat']
-            y = g_val.ndata['label']
-            nodes = g_val.nodes()
-            src_edge, dst_edge = g_val.edges()
+        x = g_val.ndata['feat']
+        y = g_val.ndata['label']
+        nodes = g_val.nodes()
+        src_edge, dst_edge = g_val.edges()
 
-            prop_val = {
-                '# nodes': f'{nodes.size(dim=0)}',
-                '# edges': f'{int(src_edge.size(dim=0) / 2)}',
-                'Average degree': f'{g_val.in_degrees().float().mean().item()}',
-                'Node homophily': f'{dgl.node_homophily(graph=g_val, y=y)}',
-                '# features':f'{x.size(dim=1)}',
-                '# labels': f'{y.max().item() + 1}'
-            }
+        prop_val = {
+            '# nodes': f'{nodes.size(dim=0)}',
+            '# edges': f'{int(src_edge.size(dim=0) / 2)}',
+            'Average degree': f'{g_val.in_degrees().float().mean().item()}',
+            'Node homophily': f'{dgl.node_homophily(graph=g_val, y=y)}',
+            '# features':f'{x.size(dim=1)}',
+            '# labels': f'{y.max().item() + 1}'
+        }
 
-            x = g_test.ndata['feat']
-            y = g_test.ndata['label']
-            nodes = g_test.nodes()
-            src_edge, dst_edge = g_test.edges()
+        x = g_test.ndata['feat']
+        y = g_test.ndata['label']
+        nodes = g_test.nodes()
+        src_edge, dst_edge = g_test.edges()
 
-            prop_test = {
-                '# nodes': f'{nodes.size(dim=0)}',
-                '# edges': f'{int(src_edge.size(dim=0) / 2)}',
-                'Average degree': f'{g_test.in_degrees().float().mean().item()}',
-                'Node homophily': f'{dgl.node_homophily(graph=g_test, y=y)}',
-                '# features':f'{x.size(dim=1)}',
-                '# labels': f'{y.max().item() + 1}'
-            }
-            info['train_graph'] = prop_train
-            info['val_graph'] = prop_val
-            info['test_graph'] = prop_test
-            del x, y, nodes, src_edge, dst_edge
-            console.log(f"Done graph splitting: :white_check_mark:")
+        prop_test = {
+            '# nodes': f'{nodes.size(dim=0)}',
+            '# edges': f'{int(src_edge.size(dim=0) / 2)}',
+            'Average degree': f'{g_test.in_degrees().float().mean().item()}',
+            'Node homophily': f'{dgl.node_homophily(graph=g_test, y=y)}',
+            '# features':f'{x.size(dim=1)}',
+            '# labels': f'{y.max().item() + 1}'
+        }
+        info['train_graph'] = prop_train
+        info['val_graph'] = prop_val
+        info['test_graph'] = prop_test
+        del x, y, nodes, src_edge, dst_edge
+        console.log(f"Done graph splitting: :white_check_mark:")
     else:
         console.log(f"Running [green]transductive[/green] setting -> does not need to split graph: :white_check_mark:")
 
