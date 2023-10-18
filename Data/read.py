@@ -409,18 +409,18 @@ def whitebox_split(graph, ratio, history=None, exist=False, diag=False):
     for key in einfo.keys():
         info[key] = einfo[key]
 
-    info['Average degree'] = shadow_graph.in_degrees().float().mean().item()
-    info['Node homophily'] = dgl.node_homophily(graph=shadow_graph, y=y)
-    info['Membership homophily'] = dgl.node_homophily(graph=shadow_graph, y=y_mem)
-    info['# labels'] = y.max().item() + 1 
+    info['Average degree'] = f'{shadow_graph.in_degrees().float().mean().item()}'
+    info['Node homophily'] = f'{dgl.node_homophily(graph=shadow_graph, y=y)}'
+    info['Membership homophily'] = f'{dgl.node_homophily(graph=shadow_graph, y=y_mem)}'
+    info['# labels'] =f'{ y.max().item() + 1}'
 
     per = partial(percentage_pos, graph=shadow_graph)
     percentage = []
     for node in shadow_graph.nodes():
         percentage.append(per(node))
     percentage = torch.Tensor(percentage)
-    info['Average % neighbor is positive'] = percentage.sum().item() / (len(percentage) + 1e-12)
-    info['Average % neighbor is negative'] = 1 - percentage.sum().item() / (len(percentage) + 1e-12)
+    info['Average % neighbor is positive'] = f'{percentage.sum().item() / (len(percentage) + 1e-12)}'
+    info['Average % neighbor is negative'] = f'{1 - percentage.sum().item() / (len(percentage) + 1e-12)}'
     log_table(dct=info, name=f'Shadow graph whitebox info')
     tracker_log_table(dct=info, name='Shadow graph of whitebox attack')
     return shadow_graph
