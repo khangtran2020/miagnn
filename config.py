@@ -12,13 +12,11 @@ def add_general_group(group):
     group.add_argument("--debug", type=int, default=0)
     group.add_argument("--performance_metric", type=str, default='acc', help="Metrics of performance")
 
-
 def add_data_group(group):
     group.add_argument('--data_path', type=str, default='Data/datasets/', help="directory path to dataset")
     group.add_argument("--data_mode", type=str, default='none', help="Mode of preprocessing data", required=True)
     group.add_argument('--dataset', type=str, default='cora', help="name of dataset")
     group.add_argument("--density", type=float, default=1.0, help="dropping rate")
-
 
 def add_model_group(group):
     group.add_argument("--model_type", type=str, default='sage', help="Model type")
@@ -42,7 +40,6 @@ def add_dp_group(group):
     group.add_argument("--trim_rule", type=str, default='adhoc', help='trimming rule')
     group.add_argument('--sampling_rate', type=float, default=0.08, help="batch size for training process")
 
-
 def add_model_attack_group(group):
     group.add_argument("--att_mode", type=str, default='blackbox', help="Model type", required=True)
     group.add_argument('--att_layers', type=int, default=4, help='# of layers')
@@ -53,7 +50,6 @@ def add_model_attack_group(group):
     group.add_argument("--sha_lr", type=float, default=0.001, help="learning rate")
     group.add_argument("--sha_epochs", type=int, default=100, help='training step')
     group.add_argument("--sha_ratio", type=float, default=0.5, help="learning rate")
-
 
 def parse_args():
     parser = argparse.ArgumentParser()

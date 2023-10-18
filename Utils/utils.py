@@ -71,7 +71,7 @@ def init_history(args):
         'te_id': None,
     }
 
-    if args.mode == 'clean':
+    if args.general_mode == 'clean':
         target_model_hist = {
             'name': None,
             'train_history_loss': [],
