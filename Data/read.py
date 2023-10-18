@@ -101,7 +101,7 @@ def read_data(args, history, exist=False):
 
         idx = torch.cat((id_intr, id_inva, id_inte), dim=0)
         graph = graph.subgraph(torch.LongTensor(idx))
-        if (args.submode != 'density') or (args.density != 1.0):
+        if (args.data_mode != 'density') or (args.density != 1.0):
             graph = drop_isolated_node(graph)
         
         x = g_train.ndata['feat']
