@@ -23,27 +23,6 @@ def seed_everything(seed):
     torch.cuda.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
 
-def get_name(args, current_date):
-    dataset_str = f'{args.dataset}_run_{args.seed}_'
-    date_str = f'{current_date.day}-{current_date.month}-{current_date.year}_{current_date.hour}-{current_date.minute}'
-    if args.mode != 'mlp':
-        model_str = f'{args.model_type}_{args.mode}_{args.epochs}_hops_{args.n_layers}_'
-    else:
-        model_str = f'{args.model_type}_{args.mode}_{args.mlp_mode}_{args.epochs}_hops_{args.n_layers}_'
-    dp_str = f'{args.trim_rule}_M_{args.clip_node}_C_{args.clip}_sigma_{args.ns}_'
-    desity_str = f'{args.submode}_{args.density}_'
-    if args.mode == 'clean':
-        if args.submode not in ['density', 'spectral', 'line', 'complete', 'tree']:
-            res_str = dataset_str + model_str + date_str
-        else:
-            res_str = dataset_str + model_str + desity_str + date_str
-    else:
-        if args.submode not in ['density', 'spectral', 'line', 'complete', 'tree']:
-            res_str = dataset_str + model_str + dp_str + date_str
-        else:
-            res_str = dataset_str + model_str + dp_str + desity_str + date_str
-    return res_str
-
 def save_res(name, args, dct):
     save_name = args.res_path + name
     with open('{}.pkl'.format(save_name), 'wb') as f:
@@ -63,28 +42,134 @@ def get_index_by_not_list(arr, test_arr):
 
 def print_args(args):
     arg_dict = {}
-    keys = []
+    keys = ['general_mode', 'general_submode', 'seed', 'performance_metric', 'dataset', 'data_mode', 'density', 'batch_size', 
+            'n_neighbor', 'model_type', 'lr', 'n_layers', 'epochs', 'clip', 'clip_node', 'trim_rule', 'ns', 'debug', 'device']
+    if args.data_mode == 'none':
+        keys.remove('density')
+
+    if args.general_mode == 'clean':
+        keys.remove('clip')
+        keys.remove('clip_node')
+        keys.remove('trim_rule')
+        keys.remove('ns')
+
     for key in keys:
-        arg_dict[key] = getattr(args, key)
+        arg_dict[key] = str(getattr(args, key))
     log_table(dct=arg_dict, name='Arguments')
+    return arg_dict
 
 def read_pickel(file):
     with open(file, 'rb') as f:
         res = pickle.load(f)
     return res
 
-def init_history():
-    history = {
+def init_history(args):
+
+    data_hist = {
         'tr_id': None,
         'va_id': None,
         'te_id': None,
-        'name': None,
-        'train_history_loss': [],
-        'train_history_acc': [],
-        'val_history_loss': [],
-        'val_history_acc': [],
-        'test_history_loss': [],
-        'test_history_acc': [],
-        'best_test': 0
     }
-    return history
+
+    if args.mode == 'clean':
+        target_model_hist = {
+            'name': None,
+            'train_history_loss': [],
+            'train_history_acc': [],
+            'val_history_loss': [],
+            'val_history_acc': [],
+            'test_history_loss': [],
+            'test_history_acc': [],
+            'best_test': 0
+        }
+    else:
+        target_model_hist =  {
+            'name': None,
+            'train_history_loss': [],
+            'train_history_acc': [],
+            'val_history_loss': [],
+            'val_history_acc': [],
+            'test_history_loss': [],
+            'test_history_acc': [],
+            '% subgraph': [],
+            '% node avg': [],
+            '% edge avg': [],
+            'avg rank': []
+        }
+
+    att_hist = {
+        'str_mask': None,
+        'ste_mask': None,
+        'shtr_loss': [],
+        'shtr_perf': [],
+        'attr_loss': [],
+        'attr_perf': [],
+        'atva_loss': [],
+        'atva_perf': [],
+        'atte_loss': [],
+        'atte_perf': [],
+    }
+
+    return data_hist, target_model_hist, att_hist
+
+def get_name(args, current_date):
+
+    date_str = f'{current_date.day}{current_date.month}{current_date.year}-{current_date.hour}{current_date.minute}'
+    data_keys = ['dataset', 'seed', 'data_mode', 'density']
+    model_keys = ['dataset', 'general_mode', 'seed', 'n_neighbor', 'model_type', 'lr', 'n_layers', 
+                 'hid_dim', 'epochs', 'optimizer', 'clip', 'clip_node', 'trim_rule', 'ns', 'sampling_rate']
+    gen_keys = ['dataset', 'general_mode', 'data_mode', 'density', 'seed', 'n_neighbor', 
+                'model_type', 'n_layers', 'clip', 'clip_node', 'trim_rule', 'ns', 
+                'sampling_rate', 'att_mode', 'sha_ratio']
+    att_keys = ['att_mode', 'seed', 'dataset', 'general_mode', 'general_submode', 'data_mode', 'density', 'sha_ratio',
+                'model_type', 'n_layers', 'clip', 'clip_node', 'trim_rule', 'ns']
+        
+    if args.data_mode != 'density': 
+        gen_keys.remove('density')
+        data_keys.remove('density')
+        att_keys.remove('density')
+    if args.general_mode == 'clean':
+        
+        gen_keys.remove('clip')
+        gen_keys.remove('clip_node')
+        gen_keys.remove('trim_rule')
+        gen_keys.remove('ns')
+        gen_keys.remove('sampling_rate')
+
+        model_keys.remove('clip')
+        model_keys.remove('clip_node')
+        model_keys.remove('trim_rule')
+        model_keys.remove('ns')
+        model_keys.remove('sampling_rate')
+        
+        att_keys.remove('clip')
+        att_keys.remove('clip_node')
+        att_keys.remove('trim_rule')
+        att_keys.remove('ns')
+        att_keys.remove('sampling_rate')
+
+    general_str = ''
+    for key in gen_keys:
+        general_str += f"{key}_{getattr(args, key)}_"
+    general_str += date_str
+
+    data_str = ''
+    for key in data_keys:
+        data_str += f"{key}_{getattr(args, key)}_"
+    
+    model_str = ''
+    for key in model_keys:
+        model_str += f"{key}_{getattr(args, key)}_"
+
+    att_str = ''
+    for key in att_keys:
+        att_str += f"{key}_{getattr(args, key)}_"
+
+    name = {
+        'data': data_str[:-1],
+        'model': model_str[:-1],
+        'att': att_str[:-1],
+        'general': general_str
+    }
+
+    return name
