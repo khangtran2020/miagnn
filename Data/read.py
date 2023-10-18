@@ -74,7 +74,7 @@ def read_data(args, history, exist=False):
         graph.ndata['test_mask'] = torch.LongTensor(id_test)
     console.log(f"Done splitting train/val/test: :white_check_mark:")
 
-    if args.data_mode == 'ind':
+    if args.general_submode == 'ind':
         if (args.data_mode == 'density') and (args.density == 1.0):
             g_train, g_val, g_test = graph_split(graph=graph, drop=False)
         else:
