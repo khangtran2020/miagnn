@@ -177,7 +177,7 @@ def read_data(args, history, exist=False):
     wandb_table = wandb.Table(data=my_data, columns=columns)
     wandb.run.log({f"Info of dataset: {args.dataset}": wandb_table})
 
-    if args.data_mode == 'ind':
+    if args.general_submode == 'ind':
         args.num_data_point = len(g_train.nodes())
         return g_train, g_val, g_test, graph
     else:
