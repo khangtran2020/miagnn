@@ -41,12 +41,8 @@ def run(args, current_time, device):
         
         if args.general_submode == 'ind':
             train_g, val_g, test_g, graph = read_data(args=args, history=data_hist, exist=exist_data)
-            train_g = train_g.to(device)
-            val_g = val_g.to(device)
-            test_g = test_g.to(device)
         else:
             graph = read_data(args=args, history=data_hist, exist=exist_data)
-            graph = graph.to(device)
         console.log(f"Done Reading data: :white_check_mark:")
 
     with console.status("Initializing Shadow Data") as status:
@@ -79,8 +75,12 @@ def run(args, current_time, device):
         
     if exist_model == False:
         if args.general_submode == 'ind':
+            train_g = train_g.to(device)
+            val_g = val_g.to(device)
+            test_g = test_g.to(device)
             tr_loader, va_loader, te_loader = init_loader(args=args, device=device, graphs=(train_g, val_g, test_g))
         else:
+            graph = graph.to(device)
             tr_loader, va_loader, te_loader = init_loader(args=args, device=device, graphs=graph)
         model = train(args=args, tr_loader=tr_loader, va_loader=va_loader, model=model, device=device, history=model_hist, name=name['model'])
         evaluate(args=args, te_loader=te_loader, model=model, device=device, history=model_hist)

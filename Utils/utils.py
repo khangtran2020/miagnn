@@ -43,7 +43,8 @@ def get_index_by_not_list(arr, test_arr):
 def print_args(args):
     arg_dict = {}
     keys = ['general_mode', 'general_submode', 'seed', 'performance_metric', 'dataset', 'data_mode', 'density', 'batch_size', 
-            'n_neighbor', 'model_type', 'lr', 'n_layers', 'epochs', 'clip', 'clip_node', 'trim_rule', 'ns', 'debug', 'device']
+            'n_neighbor', 'model_type', 'lr', 'n_layers', 'epochs', 'clip', 'clip_node', 'trim_rule', 'ns', 'debug', 'device',
+            'att_mode', 'att_submode', 'att_layers', 'att_hid_dim', 'att_lr', 'att_bs', 'att_epochs,' 'sha_lr', 'sha_epochs', 'sha_ratio']
     if args.data_mode == 'none':
         keys.remove('density')
 
@@ -121,7 +122,7 @@ def get_name(args, current_date):
     gen_keys = ['dataset', 'general_mode', 'data_mode', 'density', 'seed', 'n_neighbor', 
                 'model_type', 'n_layers', 'clip', 'clip_node', 'trim_rule', 'ns', 
                 'sampling_rate', 'att_mode', 'sha_ratio']
-    att_keys = ['att_mode', 'seed', 'dataset', 'general_mode', 'general_submode', 'data_mode', 'density', 'sha_ratio',
+    att_keys = ['att_mode', 'att_submode', 'seed', 'dataset', 'general_mode', 'general_submode', 'data_mode', 'density', 'sha_ratio',
                 'model_type', 'n_layers', 'sampling_rate', 'clip', 'clip_node', 'trim_rule', 'ns']
         
     if args.data_mode != 'density': 

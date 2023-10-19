@@ -41,7 +41,8 @@ def add_dp_group(group):
     group.add_argument('--sampling_rate', type=float, default=0.08, help="batch size for training process")
 
 def add_model_attack_group(group):
-    group.add_argument("--att_mode", type=str, default='blackbox', help="Model type", required=True)
+    group.add_argument("--att_mode", type=str, default='blackbox', help="Attack mode", required=True)
+    group.add_argument("--att_submode", type=str, default='joint', help="Joint in shadow graph or not", required=False)
     group.add_argument('--att_layers', type=int, default=4, help='# of layers')
     group.add_argument('--att_hid_dim', type=int, default=64, help='hidden embedding dim')
     group.add_argument("--att_lr", type=float, default=0.001, help="learning rate")
