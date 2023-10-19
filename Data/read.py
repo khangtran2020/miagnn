@@ -222,6 +222,7 @@ def get_graph(data_name:str):
         min_count=6000
     
     graph, list_of_label = filter_class_by_count(graph=graph, min_count=min_count)
+    console.log(list_of_label)
     return graph, list_of_label
 
 def blackbox_split(graph, ratio, train_ratio=0.5, history=None, exist=False):
