@@ -54,7 +54,7 @@ def run(args, current_time, device):
 
     with console.status("Initializing Target Model") as status:
         model_name = f"{name['model']}.pt"
-        model_path = args.save_path + model_name
+        model_path = args.model_path + model_name
         target_model_name = f"{name['model']}.pkl"
         target_model_path = args.res_path + target_model_name
         exist_model = (os.path.exists(model_path)) & (args.retrain == 0) & (os.path.exists(target_model_path))
