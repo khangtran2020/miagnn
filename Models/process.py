@@ -140,6 +140,6 @@ def evaluate(args, te_loader:torch.utils.data.DataLoader, model:torch.nn.Module,
             te_perf = metrics.compute().item()
             wandb.run.summary['te_loss'] = '{0:.3f}'.format(te_loss)
             wandb.run.summary['te_acc'] = '{0:.3f}'.format(te_perf)
-            history['best_test_loss'].append(te_loss)
-            history['best_test_perf'].append(te_perf)
+            history['best_test_loss'] = te_loss
+            history['best_test_perf'] = te_perf
             metrics.reset()

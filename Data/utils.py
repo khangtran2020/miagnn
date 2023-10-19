@@ -175,11 +175,11 @@ def init_loader(args, device, graphs):
         va_nodes = va_g.nodes()
         te_nodes = te_g.nodes()
        
-        tr_loader = dgl.dataloading.DataLoader(tr_g, tr_nodes, tr_sampler, device=device, batch_size=args.batch_size, 
+        tr_loader = dgl.dataloading.DataLoader(tr_g.to(device), tr_nodes.to(device), tr_sampler, device=device, batch_size=args.batch_size, 
                                             shuffle=True, drop_last=True, num_workers=0)    
-        va_loader = dgl.dataloading.DataLoader(va_g, va_nodes, te_sampler, device=device, batch_size=args.batch_size, 
+        va_loader = dgl.dataloading.DataLoader(va_g.to(device), va_nodes.to(device), te_sampler, device=device, batch_size=args.batch_size, 
                                             shuffle=False, drop_last=False, num_workers=0)
-        te_loader = dgl.dataloading.DataLoader(te_g, te_nodes, te_sampler, device=device, batch_size=args.batch_size, 
+        te_loader = dgl.dataloading.DataLoader(te_g.to(device), te_nodes.to(device), te_sampler, device=device, batch_size=args.batch_size, 
                                             shuffle=False, drop_last=False, num_workers=0)
         
     else:

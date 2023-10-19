@@ -4,6 +4,7 @@ import torch
 import datetime
 import warnings
 from config import parse_args
+from Attacks.blackbox.blackbox import attack as bb_attack
 from Data.read import read_data, whitebox_split, blackbox_split
 from Data.utils import init_loader
 from Models.process import train, evaluate
@@ -75,18 +76,18 @@ def run(args, current_time, device):
         
     if exist_model == False:
         if args.general_submode == 'ind':
-            train_g = train_g.to(device)
-            val_g = val_g.to(device)
-            test_g = test_g.to(device)
             tr_loader, va_loader, te_loader = init_loader(args=args, device=device, graphs=(train_g, val_g, test_g))
         else:
-            graph = graph.to(device)
             tr_loader, va_loader, te_loader = init_loader(args=args, device=device, graphs=graph)
         model = train(args=args, tr_loader=tr_loader, va_loader=va_loader, model=model, device=device, history=model_hist, name=name['model'])
         evaluate(args=args, te_loader=te_loader, model=model, device=device, history=model_hist)
 
-    # if args.att_mode == 'blackbox':
-    #     model_hist, att_hist = blackbox(args=args, graph=(train_g, val_g, test_g), model=model, device=device, history=history, name=name)
+    if args.att_mode == 'blackbox':
+        if args.general_submode == 'ind':
+            graphs = (train_g, val_g, test_g, shadow_graph)
+        else:
+            graphs = (graph, shadow_graph)
+        bb_attack(args=args, graphs=graphs, tar_model=model, device=device, history=att_hist, name=name['att'])
     # elif args.att_mode == 'whitebox':
     #     model_hist, att_hist = whitebox(args=args, graph=(train_g, val_g, test_g, shadow_graph), model=model, device=device, history=history, name=name)
     # elif args.att_mode == 'wanal':

@@ -103,6 +103,8 @@ def init_history(args):
         'ste_mask': None,
         'shtr_loss': [],
         'shtr_perf': [],
+        'shanhtr_loss': [],
+        'shanhtr_perf': [],
         'attr_loss': [],
         'attr_perf': [],
         'atva_loss': [],
