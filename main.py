@@ -41,8 +41,12 @@ def run(args, current_time, device):
         
         if args.general_submode == 'ind':
             train_g, val_g, test_g, graph = read_data(args=args, history=data_hist, exist=exist_data)
+            train_g = train_g.to(device)
+            val_g = val_g.to(device)
+            test_g = test_g.to(device)
         else:
             graph = read_data(args=args, history=data_hist, exist=exist_data)
+            graph = graph.to(device)
         console.log(f"Done Reading data: :white_check_mark:")
 
     with console.status("Initializing Shadow Data") as status:
