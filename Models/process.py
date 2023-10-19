@@ -100,7 +100,7 @@ def train(args, tr_loader:torch.utils.data.DataLoader, va_loader:torch.utils.dat
             progress.console.print(f"Epoch {epoch}: [yellow]loss[/yellow]: {tr_loss}, [yellow]acc[/yellow]: {tr_perf}, [yellow]va_loss[/yellow]: {va_loss}, [yellow]va_acc[/yellow]: {va_perf}") 
             progress.advance(task1)
         console.log(f"Done Training target model: :white_check_mark:")
-    model.load_state_dict(torch.load(args.save_path + model_name))
+    model.load_state_dict(torch.load(args.model_path + model_name))
     return model
 
 def evaluate(args, te_loader:torch.utils.data.DataLoader, model:torch.nn.Module, device:torch.device, history:Dict):
