@@ -13,15 +13,20 @@ def drop_isolated_node(graph:dgl.DGLGraph):
     nodes_id = graph.nodes()[index]
     return graph.subgraph(torch.LongTensor(nodes_id))
 
-def filter_class_by_count(graph:dgl.DGLGraph, min_count:int):
-    target = graph.ndata['label'].clone()
+def filter_class_by_count(graph, min_count):
+    target = deepcopy(graph.ndata['label'])
+    # print(target.unique(return_counts=True)[1])
     counts = target.unique(return_counts=True)[1] > min_count
     index = get_index_by_value(a=counts, val=True)
     label_dict = dict(zip(index.tolist(), range(len(index))))
+    # print("Label Dict:", label_dict)
     mask = target.apply_(lambda x: x in index.tolist())
-    nodes = get_index_by_value(a=mask, val=True)
-    g = graph.subgraph(nodes)
-    return g, index.tolist()
+    graph.ndata['label'].apply_(lambda x: label_dict[x] if x in label_dict.keys() else -1)
+    graph.ndata['train_mask'] = graph.ndata['train_mask'] & mask
+    graph.ndata['val_mask'] = graph.ndata['val_mask'] & mask
+    graph.ndata['test_mask'] = graph.ndata['test_mask'] & mask
+    graph.ndata['label_mask'] = mask
+    return index.tolist()
 
 def graph_split(graph:dgl.DGLGraph, drop:bool=True):
     train_id = torch.index_select(graph.nodes(), 0, graph.ndata['train_mask'].nonzero().squeeze()).numpy()
