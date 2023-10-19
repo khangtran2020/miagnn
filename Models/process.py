@@ -97,7 +97,7 @@ def train(args, tr_loader:torch.utils.data.DataLoader, va_loader:torch.utils.dat
             history['val_history_acc'].append(va_perf)
             es(epoch=epoch, epoch_score=va_perf, model=model, model_path=args.model_path + model_name)
             tracker_log(dct = results)
-            progress.console.print("Epoch {0:.0f}: [yellow]loss[/yellow]: {0:.3f}, [yellow]acc[/yellow]: {0:.3f}, [yellow]va_loss[/yellow]: {0:.3f}, [yellow]va_acc[/yellow]: {0:.3f}".format(epoch, tr_loss, tr_perf, va_loss, va_perf)) 
+            progress.console.print(f"Epoch {epoch}: [yellow]loss[/yellow]: {tr_loss}, [yellow]acc[/yellow]: {tr_perf}, [yellow]va_loss[/yellow]: {va_loss}, [yellow]va_acc[/yellow]: {va_perf}") 
             progress.update(task1, advance=epoch+1)
         console.log(f"Done Training target model: :white_check_mark:")
     model.load_state_dict(torch.load(args.save_path + model_name))
