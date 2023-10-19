@@ -44,7 +44,7 @@ def print_args(args):
     arg_dict = {}
     keys = ['general_mode', 'general_submode', 'seed', 'performance_metric', 'dataset', 'data_mode', 'density', 'batch_size', 
             'n_neighbor', 'model_type', 'lr', 'n_layers', 'epochs', 'clip', 'clip_node', 'trim_rule', 'ns', 'debug', 'device',
-            'att_mode', 'att_submode', 'att_layers', 'att_hid_dim', 'att_lr', 'att_bs', 'att_epochs,' 'sha_lr', 'sha_epochs', 'sha_ratio']
+            'att_mode', 'att_submode', 'att_layers', 'att_hid_dim', 'att_lr', 'att_bs', 'att_epochs', 'sha_lr', 'sha_epochs', 'sha_ratio']
     if args.data_mode == 'none':
         keys.remove('density')
 
