@@ -55,7 +55,7 @@ def train(args, tr_loader:torch.utils.data.DataLoader, va_loader:torch.utils.dat
                 tr_loss += loss.item()
                 ntr += preds.size(dim=0)
                 # progress.console.print("[yellow]loss[/yellow]: {0:.3f}, [yellow]acc[/yellow]: {0:.3f}".format(loss.item()/preds.size(dim=0), metrics.computes().item())) 
-                progress.update(task2, advance=bi+1)
+                progress.update(task2, advance=(bi+1) / len(tr_loader))
 
             tr_loss = tr_loss / ntr 
             tr_perf = metrics.compute().item()
@@ -78,7 +78,7 @@ def train(args, tr_loader:torch.utils.data.DataLoader, va_loader:torch.utils.dat
                     va_loss += loss.item()
                     nva += preds.size(dim=0)
                     # progress.console.print("[yellow]va_loss[/yellow]: {0:.3f}, [yellow]va_acc[/yellow]: {0:.3f}".format(loss.item()/preds.size(dim=0), metrics.computes().item())) 
-                    progress.update(task3, advance=bi+1)
+                    progress.update(task3, advance=(bi+1) / len(va_loader))
 
             va_loss = va_loss / nva 
             va_perf = metrics.compute().item()
@@ -98,7 +98,7 @@ def train(args, tr_loader:torch.utils.data.DataLoader, va_loader:torch.utils.dat
             es(epoch=epoch, epoch_score=va_perf, model=model, model_path=args.model_path + model_name)
             tracker_log(dct = results)
             progress.console.print(f"Epoch {epoch}: [yellow]loss[/yellow]: {tr_loss}, [yellow]acc[/yellow]: {tr_perf}, [yellow]va_loss[/yellow]: {va_loss}, [yellow]va_acc[/yellow]: {va_perf}") 
-            progress.update(task1, advance=epoch+1)
+            progress.update(task1, advance=(epoch+1) / args.epochs)
         console.log(f"Done Training target model: :white_check_mark:")
     model.load_state_dict(torch.load(args.save_path + model_name))
     return model
