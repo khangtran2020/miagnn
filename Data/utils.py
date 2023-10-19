@@ -162,3 +162,37 @@ def percentage_pos(node:torch.Tensor, graph:dgl.DGLGraph):
     num_neg = graph.ndata['neg_mask'][nodes_id.long()].sum()
     pos_percentage = num_pos.item() / (num_pos.item() + num_neg.item() + 1e-12)
     return pos_percentage
+
+def init_loader(args, device, graphs):
+
+    tr_sampler = dgl.dataloading.NeighborSampler([args.n_neighbor for i in range(args.n_layers)])
+    te_sampler = dgl.dataloading.NeighborSampler([-1 for i in range(args.n_layers)])
+    
+    if args.general_submode == 'ind':
+        tr_g, va_g, te_g = graphs
+        tr_nodes = tr_g.nodes()
+        va_nodes = va_g.nodes()
+        te_nodes = te_g.nodes()
+       
+        tr_loader = dgl.dataloading.DataLoader(tr_g, tr_nodes, tr_sampler, device=device, batch_size=args.batch_size, 
+                                            shuffle=True, drop_last=True, num_workers=0)    
+        va_loader = dgl.dataloading.DataLoader(va_g, va_nodes, te_sampler, device=device, batch_size=args.batch_size, 
+                                            shuffle=False, drop_last=False, num_workers=0)
+        te_loader = dgl.dataloading.DataLoader(te_g, te_nodes, te_sampler, device=device, batch_size=args.batch_size, 
+                                            shuffle=False, drop_last=False, num_workers=0)
+        
+    else:
+        
+        graph = graphs
+        tr_nodes = get_index_by_value(a=graph.ndata['train_mask'], val=1)
+        va_nodes = get_index_by_value(a=graph.ndata['val_mask'], val=1)
+        te_nodes = get_index_by_value(a=graph.ndata['test_mask'], val=1)
+
+        tr_loader = dgl.dataloading.DataLoader(graph, tr_nodes, tr_sampler, device=device, batch_size=args.batch_size, 
+                                            shuffle=True, drop_last=True, num_workers=0)    
+        va_loader = dgl.dataloading.DataLoader(graph, va_nodes, te_sampler, device=device, batch_size=args.batch_size, 
+                                            shuffle=False, drop_last=False, num_workers=0)
+        te_loader = dgl.dataloading.DataLoader(graph, te_nodes, te_sampler, device=device, batch_size=args.batch_size, 
+                                            shuffle=False, drop_last=False, num_workers=0)
+        
+    return tr_loader, va_loader, te_loader

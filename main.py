@@ -5,6 +5,9 @@ import datetime
 import warnings
 from config import parse_args
 from Data.read import read_data, whitebox_split, blackbox_split
+from Data.utils import init_loader
+from Models.process import train, evaluate
+from Models.utils import init_model
 from Utils.utils import seed_everything, read_pickel, print_args, init_history, get_name
 from Utils.console import console, log_table
 from Utils.tracking import init_tracker, tracker_log_table
@@ -49,29 +52,34 @@ def run(args, current_time, device):
             shadow_graph = whitebox_split(graph=graph, ratio=args.sha_ratio, history=data_hist, exist=exist_data, diag=True)
         console.log(f"Done Initializing Shadow Data: :white_check_mark:")
 
-    # """
-    #     INIT TARGET MODEL
-    # """
+    with console.status("Initializing Target Model") as status:
+        model_name = f"{name['model']}.pt"
+        model_path = args.save_path + model_name
+        target_model_name = f"{name['model']}.pkl"
+        target_model_path = args.res_path + target_model_name
+        exist_model = (os.path.exists(model_path)) & (args.retrain == 0) & (os.path.exists(target_model_path))
 
-    # model_name = f"{name['model']}.pt"
-    # model_path = args.save_path + model_name
-    # target_model_name = f"{name['model']}.pkl"
-    # target_model_path = args.res_path + target_model_name
+        if exist_model:
+            console.log(f"Model existed: :white_check_mark:")
+            target_model_name = f"{name['model']}.pkl"
+            target_model_path = args.res_path + target_model_name
+            model_hist = read_pickel(file=target_model_path)
+        else:
+            console.log(f"Model did not exist: :x:")
 
-    # if (os.path.exists(model_path)) & (args.retrain == 0) & (os.path.exists(target_model_path)): 
-    #     exist_model = True
-    #     target_model_name = f"{name['model']}.pkl"
-    #     target_model_path = args.res_path + target_model_name
-    #     model_hist = read_pickel(file=target_model_path)
-
-    # model = init_model(args=args)
-    # if exist_model: 
-    #     model.load_state_dict(torch.load(model_path))
-    #     console.log(f"Model exist, loaded previous trained model")
-
-    # args.exist_data = exist_data
-    # args.exist_model = exist_model
-    # history = (model_hist, att_hist)
+        model = init_model(args=args)
+        if exist_model: 
+            model.load_state_dict(torch.load(model_path))
+            console.log(f"Model exist, loaded previous trained model")
+        console.log(f"Target model's configuration: {model}")
+        
+    if exist_model == False:
+        if args.general_submode == 'ind':
+            tr_loader, va_loader, te_loader = init_loader(args=args, device=device, graphs=(train_g, val_g, test_g))
+        else:
+            tr_loader, va_loader, te_loader = init_loader(args=args, device=device, graphs=graph)
+        model = train(args=args, tr_loader=tr_loader, va_loader=va_loader, model=model, device=device, history=model_hist, name=name['model'])
+        evaluate(args=args, te_loader=te_loader, model=model, device=device, history=model_hist)
 
     # if args.att_mode == 'blackbox':
     #     model_hist, att_hist = blackbox(args=args, graph=(train_g, val_g, test_g), model=model, device=device, history=history, name=name)
