@@ -48,7 +48,7 @@ def run(args, current_time, device):
 
     with console.status("Initializing Shadow Data") as status:
         if args.att_mode == 'blackbox':
-            shadow_graph = blackbox_split(graph=train_g, ratio=args.sha_ratio, history=data_hist, exist=exist_data)
+            shadow_graph = blackbox_split(graph=graph, ratio=args.sha_ratio, history=data_hist, exist=exist_data)
         elif args.att_mode == 'whitebox':
             shadow_graph = whitebox_split(graph=graph, ratio=args.sha_ratio, history=data_hist, exist=exist_data, diag=True)
         console.log(f"Done Initializing Shadow Data: :white_check_mark:")
