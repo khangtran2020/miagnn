@@ -84,7 +84,7 @@ def run(args, current_time, device):
 
     if args.att_mode == 'blackbox':
         if args.general_submode == 'ind':
-            graphs = (train_g, val_g, test_g, shadow_graph)
+            graphs = (train_g, test_g, shadow_graph)
         else:
             graphs = (graph, shadow_graph)
         bb_attack(args=args, graphs=graphs, tar_model=model, device=device, history=att_hist, name=name['att'])
