@@ -64,9 +64,8 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
             pred_nh = tar_model.full(tarnh_g, tarnh_g.ndata['feat'])
             tar_g.ndata['pred'] = pred
             tar_g.ndata['nh_pred'] = pred_nh
-            org_id_tr, x_tr, y_tr = generate_attack_samples(graph=sha_g, mode='shadow', device=device)
-            org_id_te, x_te, y_te = generate_attack_samples(graph=tar_g, mode='target', device=device)
-            print(x_tr.size(), x_te.size())
+            x_tr, y_tr, org_id_tr = generate_attack_samples(graph=sha_g, mode='shadow', device=device)
+            x_te, y_te, org_id_te = generate_attack_samples(graph=tar_g, mode='target', device=device)
             new_dim = int(x_tr.size(dim=1) / 2)
         tr_data = Data(X=x_tr, y=y_tr, id=org_id_tr)
         te_data = Data(X=x_te, y=y_te, id=org_id_te)
