@@ -87,7 +87,7 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
             threshold = [0.1*i for i in range(1,10)]
             metric = ['auc', 'acc', 'pre', 'rec', 'f1']
             objective = torch.nn.BCEWithLogitsLoss(reduction='mean')
-            pred_fn = torch.nn.Softmax(dim=1).to(device)
+            pred_fn = torch.nn.Sigmoid().to(device)
             node_dict = {}
             label = torch.Tensor([]).to(device)
             preds = torch.Tensor([]).to(device)

@@ -88,7 +88,7 @@ def train_bbattack(args, tr_loader:torch.utils.data.DataLoader, te_loader:torch.
     # DEfining criterion
     objective = torch.nn.BCEWithLogitsLoss(reduction='mean')
     objective.to(device)
-    pred_fn = torch.nn.Softmax(dim=1).to(device)
+    pred_fn = torch.nn.Sigmoid().to(device)
     metrics = torchmetrics.classification.BinaryAUROC().to(device)
 
     console.log(f"[green]Attack / Optimizing model with optimizer[/green]: {opt}")
