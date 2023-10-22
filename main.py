@@ -84,7 +84,7 @@ def run(args, current_time, device):
 if __name__ == "__main__":
     current_time = datetime.datetime.now()
     args = parse_args()
-    console.rule(f"Begin experiment: {args.project_name}")
+    console.rule(f"Begin experiment: {args.proj_name}")
     with console.status("Initializing...") as status:
         console.log(f'[bold][green]Initializing')
         arg_dict = print_args(args=args)
