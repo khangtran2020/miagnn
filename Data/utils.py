@@ -193,8 +193,8 @@ def remove_edge(graph:dgl.DGLGraph, mode:str):
 
     num_node = graph.nodes().size(dim=0)
     id_sha = graph.ndata['sh_mask']
-    sha_nodes = get_index_by_value(a=sha_g.ndata['sh_mask'], val=1)
-    tar_nodes = get_index_by_value(a=sha_g.ndata['sh_mask'], val=0)
+    sha_nodes = get_index_by_value(a=graph.ndata['sh_mask'], val=1)
+    tar_nodes = get_index_by_value(a=graph.ndata['sh_mask'], val=0)
     sha_g = graph.subgraph(sha_nodes)
     tar_g = graph.subgraph(tar_nodes)
     if mode == 'ind':
