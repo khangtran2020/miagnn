@@ -33,9 +33,11 @@ def generate_attack_samples(graph, mode, device):
     num_test = graph.ndata[te_mask].sum()
     num_half = min(num_train, num_test)
 
+    print(graph.ndata[pred_mask].size(), graph.ndata[prednh_mask].size())
+
     # labels = F.one_hot(tr_graph.ndata['label'], num_classes).float().to(device)
     org_id = graph.ndata['org_id']
-    top_k, _ = torch.topk(graph.ndata[pred_mask], k=2, dim=1)
+    top_k, _ = torch.topk(graph.ndata[pred_mask], k=2)
     top_k_nh, _ = torch.topk(graph.ndata[prednh_mask], k=2)
     samples = torch.cat([top_k, top_k_nh], dim=1).to(device)
 
