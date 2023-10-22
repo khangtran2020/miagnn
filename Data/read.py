@@ -123,7 +123,7 @@ def read_data(args, history, exist=False):
     else:
         console.log(f"Running [green]transductive[/green] setting -> does not need to split graph: :white_check_mark:")
 
-    table = Table(title=f'Info of dataset: {args.dataset}')
+    table = Table(title=f'Info of dataset: {args.data}')
     table.add_column("Graph", style="key")
     table.add_column("Property", style="key")
     table.add_column("Values", style="value")
@@ -144,7 +144,7 @@ def read_data(args, history, exist=False):
                 table.add_row('', f'{subkey}', f'{dct[subkey]}')
     console.log(table)
     wandb_table = wandb.Table(data=my_data, columns=columns)
-    wandb.run.log({f"Info of dataset: {args.dataset}": wandb_table})
+    wandb.run.log({f"Info of dataset: {args.data}": wandb_table})
     return tar_g, sha_g  
 
 def get_graph(data_name:str):
