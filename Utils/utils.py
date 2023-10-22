@@ -23,9 +23,8 @@ def seed_everything(seed):
     torch.cuda.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
 
-def save_res(name, args, dct):
-    save_name = args.res_path + name
-    with open('{}.pkl'.format(save_name), 'wb') as f:
+def save_dict(path, dct):
+    with open(path, 'wb') as f:
         pickle.dump(dct, f)
 
 def get_index_by_value(a, val):
