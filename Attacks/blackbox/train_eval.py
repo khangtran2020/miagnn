@@ -155,10 +155,10 @@ def train_bbattack(args, tr_loader:torch.utils.data.DataLoader, te_loader:torch.
             progress.reset(task3)
 
             results = {
-                "Target train/loss": tr_loss, 
-                f"Target train/auc": tr_perf, 
-                "Target test/loss": te_loss, 
-                f"Target test/auc": te_perf,
+                "Atack train/loss": tr_loss, 
+                f"Atack train/auc": tr_perf, 
+                "Atack test/loss": te_loss, 
+                f"Atack test/auc": te_perf,
             }
             history['attr_loss'].append(tr_loss)
             history['attr_perf'].append(tr_perf)
