@@ -52,7 +52,7 @@ def train(args, tr_loader:torch.utils.data.DataLoader, va_loader:torch.utils.dat
                 metrics.update(preds, labels)
                 loss.backward()
                 optimizer.step()
-                tr_loss += loss.item()
+                tr_loss += loss.item()*preds.size(dim=0)
                 ntr += preds.size(dim=0)
                 # progress.console.print("[yellow]loss[/yellow]: {0:.3f}, [yellow]acc[/yellow]: {0:.3f}".format(loss.item()/preds.size(dim=0), metrics.computes().item())) 
                 progress.advance(task2)
@@ -75,7 +75,7 @@ def train(args, tr_loader:torch.utils.data.DataLoader, va_loader:torch.utils.dat
                     loss = objective(preds, labels)
                     preds = pred_fn(preds)
                     metrics.update(preds, labels)
-                    va_loss += loss.item()
+                    va_loss += loss.item()*preds.size(dim=0)
                     nva += preds.size(dim=0)
                     # progress.console.print("[yellow]va_loss[/yellow]: {0:.3f}, [yellow]va_acc[/yellow]: {0:.3f}".format(loss.item()/preds.size(dim=0), metrics.computes().item())) 
                     progress.advance(task3)
@@ -101,7 +101,7 @@ def train(args, tr_loader:torch.utils.data.DataLoader, va_loader:torch.utils.dat
             progress.advance(task1)
         console.log(f"Done Training target model: :white_check_mark:")
     model.load_state_dict(torch.load(args.model_path + model_name))
-    return model
+    return model, history
 
 def evaluate(args, te_loader:torch.utils.data.DataLoader, model:torch.nn.Module, device:torch.device, history:Dict):
 

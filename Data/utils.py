@@ -1,6 +1,7 @@
 import dgl
 import torch
 import numpy as np
+from copy import deepcopy
 from sklearn.model_selection import train_test_split
 from Utils.utils import get_index_by_value
 
@@ -24,39 +25,48 @@ def filter_class_by_count(graph:dgl.DGLGraph, min_count:int):
     g = graph.subgraph(nodes)
     return g, index.tolist()
 
-def graph_split(graph:dgl.DGLGraph, drop:bool=True):
-    train_id = torch.index_select(graph.nodes(), 0, graph.ndata['train_mask'].nonzero().squeeze()).numpy()
-    val_id = torch.index_select(graph.nodes(), 0, graph.ndata['val_mask'].nonzero().squeeze()).numpy()
-    test_id = torch.index_select(graph.nodes(), 0, graph.ndata['test_mask'].nonzero().squeeze()).numpy()
-    # print(f"ORIGINAL GRAPH HAS: {graph.nodes().size()} nodes and {graph.edges()[0].size()} edges")
-    train_g = graph.subgraph(torch.LongTensor(train_id))
-    test_g = graph.subgraph(torch.LongTensor(test_id))
-    val_g = graph.subgraph(torch.LongTensor(val_id))
-
-    if drop == True:
-        train_g = drop_isolated_node(train_g)
-        val_g = drop_isolated_node(val_g)
-        test_g = drop_isolated_node(test_g)
-
-    return train_g, val_g, test_g
-
-def node_split(graph:dgl.DGLGraph, val_size:float, test_size:float):
+def node_split(args, graph:dgl.DGLGraph, val_size:float, test_size:float):
+    
     node_id = np.arange(len(graph.nodes()))
     node_label = graph.ndata['label'].tolist()
-    id_train, id_test, y_train, _ = train_test_split(node_id, node_label, test_size=test_size, stratify=node_label)
-    id_train, id_val, _, _ = train_test_split(id_train, y_train, test_size=val_size, stratify=y_train)
     
-    train_mask = torch.zeros(graph.nodes().size(dim=0))
-    val_mask = torch.zeros(graph.nodes().size(dim=0))
-    test_mask = torch.zeros(graph.nodes().size(dim=0))
-    
-    train_mask[id_train] = 1
-    val_mask[id_val] = 1
-    test_mask[id_test] = 1
+    if args.att_mode == 'blackbox':
 
-    graph.ndata['train_mask'] = train_mask.int()
-    graph.ndata['val_mask'] = val_mask.int()
-    graph.ndata['test_mask'] = test_mask.int()
+        id_tar, id_sha, y_tar, _ = train_test_split(node_id, node_label, test_size=0.4, stratify=node_label)
+        id_tr, id_te, y_tr, _ = train_test_split(id_tar, y_tar, test_size=test_size, stratify=y_tar)
+        id_tr, id_va, _, _ = train_test_split(id_tr, y_tr, test_size=val_size, stratify=y_tr)
+
+        nnode_intr = int(args.sha_rat * len(id_tr))
+        if nnode_intr > 0.0:
+            id_trinsh = np.random.choice(a=id_tr, size=nnode_intr, replace=False)
+            id_sha = np.concatenate((id_sha, id_trinsh), axis=0)
+            del id_trinsh
+        del nnode_intr
+    
+    tr_mask = torch.zeros(graph.nodes().size(dim=0))
+    va_mask = torch.zeros(graph.nodes().size(dim=0))
+    te_mask = torch.zeros(graph.nodes().size(dim=0))
+    sh_mask = torch.zeros(graph.nodes().size(dim=0))
+
+    tr_mask[id_tr] = 1
+    va_mask[id_va] = 1
+    te_mask[id_te] = 1
+    sh_mask[id_sha] = 1
+
+    graph.ndata['tr_mask'] = tr_mask.int()
+    graph.ndata['va_mask'] = va_mask.int()
+    graph.ndata['te_mask'] = te_mask.int()
+    graph.ndata['sh_mask'] = sh_mask.int()
+    return graph
+
+def graph_split(graph:dgl.DGLGraph):
+    tr_id = get_index_by_value(a=graph.ndata['tr_mask'], val=1)
+    va_id = get_index_by_value(a=graph.ndata['va_mask'], val=1)
+    te_id = get_index_by_value(a=graph.ndata['te_mask'], val=1)
+    tr_g = graph.subgraph(torch.LongTensor(tr_id))
+    te_g = graph.subgraph(torch.LongTensor(te_id))
+    va_g = graph.subgraph(torch.LongTensor(va_id))
+    return tr_g, va_g, te_g
 
 def reduce_desity(g:dgl.DGLGraph, dens_reduction:float):
     src_edge, dst_edge = g.edges()
@@ -164,36 +174,55 @@ def percentage_pos(node:torch.Tensor, graph:dgl.DGLGraph):
     pos_percentage = num_pos.item() / (num_pos.item() + num_neg.item() + 1e-12)
     return pos_percentage
 
-def init_loader(args, device, graphs):
+def init_loader(args, device:torch.device, graph:dgl.DGLGraph):
 
-    tr_sampler = dgl.dataloading.NeighborSampler([args.n_neighbor for i in range(args.n_layers)])
-    te_sampler = dgl.dataloading.NeighborSampler([-1 for i in range(args.n_layers)])
-    
-    if args.general_submode == 'ind':
-        tr_g, va_g, te_g = graphs
-        tr_nodes = tr_g.nodes()
-        va_nodes = va_g.nodes()
-        te_nodes = te_g.nodes()
-       
-        tr_loader = dgl.dataloading.DataLoader(tr_g.to(device), tr_nodes.to(device), tr_sampler, device=device, batch_size=args.batch_size, 
-                                            shuffle=True, drop_last=True, num_workers=0)    
-        va_loader = dgl.dataloading.DataLoader(va_g.to(device), va_nodes.to(device), te_sampler, device=device, batch_size=args.batch_size, 
-                                            shuffle=False, drop_last=False, num_workers=0)
-        te_loader = dgl.dataloading.DataLoader(te_g.to(device), te_nodes.to(device), te_sampler, device=device, batch_size=args.batch_size, 
-                                            shuffle=False, drop_last=False, num_workers=0)
-        
-    else:
-        
-        graph = graphs
-        tr_nodes = get_index_by_value(a=graph.ndata['train_mask'], val=1)
-        va_nodes = get_index_by_value(a=graph.ndata['val_mask'], val=1)
-        te_nodes = get_index_by_value(a=graph.ndata['test_mask'], val=1)
-
-        tr_loader = dgl.dataloading.DataLoader(graph, tr_nodes, tr_sampler, device=device, batch_size=args.batch_size, 
-                                            shuffle=True, drop_last=True, num_workers=0)    
-        va_loader = dgl.dataloading.DataLoader(graph, va_nodes, te_sampler, device=device, batch_size=args.batch_size, 
-                                            shuffle=False, drop_last=False, num_workers=0)
-        te_loader = dgl.dataloading.DataLoader(graph, te_nodes, te_sampler, device=device, batch_size=args.batch_size, 
-                                            shuffle=False, drop_last=False, num_workers=0)
-        
+    tr_sampler = dgl.dataloading.NeighborSampler([args.n_neighbor for i in range(args.n_layers)], mask='target')
+    te_sampler = dgl.dataloading.NeighborSampler([-1 for i in range(args.n_layers)], mask='target')
+    tr_nodes = get_index_by_value(a=graph.ndata['tr_mask'], val=1).to(device)
+    va_nodes = get_index_by_value(a=graph.ndata['va_mask'], val=1).to(device)
+    te_nodes = get_index_by_value(a=graph.ndata['te_mask'], val=1).to(device)
+    tr_loader = dgl.dataloading.DataLoader(graph.to(device), tr_nodes, tr_sampler, device=device, batch_size=args.batch_size, 
+                                        shuffle=True, drop_last=True, num_workers=0)    
+    va_loader = dgl.dataloading.DataLoader(graph.to(device), va_nodes, te_sampler, device=device, batch_size=args.batch_size, 
+                                        shuffle=False, drop_last=False, num_workers=0)
+    te_loader = dgl.dataloading.DataLoader(graph.to(device), te_nodes, te_sampler, device=device, batch_size=args.batch_size, 
+                                        shuffle=False, drop_last=False, num_workers=0)
     return tr_loader, va_loader, te_loader
+
+def remove_edge(graph:dgl.DGLGraph, mode:str):
+
+    num_node = graph.nodes().size(dim=0)
+    id_sha = graph.ndata['sh_mask']
+    sha_nodes = get_index_by_value(a=sha_g.ndata['sh_mask'], val=1)
+    tar_nodes = get_index_by_value(a=sha_g.ndata['sh_mask'], val=0)
+    sha_g = graph.subgraph(sha_nodes)
+    tar_g = graph.subgraph(tar_nodes)
+    if mode == 'ind':
+        num_node = tar_g.nodes().size(dim=0)
+        id_tr = tar_g.ndata['tr_mask']
+        id_va = tar_g.ndata['va_mask']
+        id_te = tar_g.ndata['te_mask']
+        
+        src_edges, dst_edges = tar_g.edges()
+        src_intr = id_tr[src_edges]
+        src_inva = id_va[src_edges]
+        src_inte = id_te[src_edges]
+
+        dst_intr = id_tr[dst_edges]
+        dst_inva = id_va[dst_edges]
+        dst_inte = id_te[dst_edges]
+
+        same_intr = torch.logical_and(src_intr, dst_intr)
+        same_inva = torch.logical_and(src_inva, dst_inva)
+        same_inte = torch.logical_and(src_inte, dst_inte)
+
+        edge_mask_tar = torch.logical_or(same_intr, same_inva)
+        edge_mask_tar = torch.logical_or(edge_mask_tar, same_inte)
+        eid_tar = get_index_by_value(a=edge_mask_tar, val=1)
+        src_tar = src_edges[eid_tar]
+        dst_tar = dst_edges[eid_tar]
+        temp_targ = dgl.graph((src_tar, dst_tar), num_nodes=num_node)
+        for key in tar_g.ndata.keys():
+            temp_targ.ndata[key] = tar_g.ndata[key].clone()
+        tar_g = deepcopy(temp_targ)
+    return tar_g, sha_g

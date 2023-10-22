@@ -42,11 +42,11 @@ def get_index_by_not_list(arr, test_arr):
 
 def print_args(args):
     arg_dict = {}
-    keys = ['general_mode', 'general_submode', 'seed', 'performance_metric', 'dataset', 'data_mode', 'density', 'batch_size', 
-            'n_neighbor', 'model_type', 'lr', 'n_layers', 'epochs', 'clip', 'clip_node', 'trim_rule', 'ns', 'debug', 'device',
-            'att_mode', 'att_submode', 'att_layers', 'att_hid_dim', 'att_lr', 'att_bs', 'att_epochs', 'sha_lr', 'sha_epochs', 'sha_ratio']
+    keys = ['gen_mode', 'gen_submode', 'seed', 'met', 'data', 'data_mode', 'dens', 'bs',
+            'nnei', 'model', 'lr', 'nlay', 'epochs', 'clip', 'clip_node', 'trim_rule', 'ns', 'debug', 'device',
+            'att_mode', 'att_submode', 'att_lay', 'att_hdim', 'att_lr', 'att_bs', 'att_epochs', 'sha_lr', 'sha_epochs', 'sha_rat']
     if args.data_mode == 'none':
-        keys.remove('density')
+        keys.remove('dens')
 
     if args.general_mode == 'clean':
         keys.remove('clip')
@@ -72,7 +72,7 @@ def init_history(args):
         'te_id': None,
     }
 
-    if args.general_mode == 'clean':
+    if args.gen_mode == 'clean':
         target_model_hist = {
             'name': None,
             'train_history_loss': [],
@@ -118,19 +118,19 @@ def init_history(args):
 def get_name(args, current_date):
 
     date_str = f'{current_date.day}{current_date.month}{current_date.year}-{current_date.hour}{current_date.minute}'
-    data_keys = ['dataset', 'seed', 'data_mode', 'density']
-    model_keys = ['dataset', 'general_mode', 'seed', 'n_neighbor', 'model_type', 'lr', 'n_layers', 
-                 'hid_dim', 'epochs', 'optimizer', 'clip', 'clip_node', 'trim_rule', 'ns', 'sampling_rate']
-    gen_keys = ['dataset', 'general_mode', 'data_mode', 'density', 'seed', 'n_neighbor', 
-                'model_type', 'n_layers', 'clip', 'clip_node', 'trim_rule', 'ns', 
-                'sampling_rate', 'att_mode', 'sha_ratio']
-    att_keys = ['att_mode', 'att_submode', 'seed', 'dataset', 'general_mode', 'general_submode', 'data_mode', 'density', 'sha_ratio',
-                'model_type', 'n_layers', 'sampling_rate', 'clip', 'clip_node', 'trim_rule', 'ns']
+    data_keys = ['data', 'seed', 'data_mode', 'dens']
+    model_keys = ['data', 'gen_mode', 'seed', 'nnei', 'model', 'lr', 'nlay', 'hdim', 'epochs', 
+                  'opt', 'clip', 'clip_node', 'trim_rule', 'ns', 'sampling_rate']
+    gen_keys = ['data', 'gen_mode', 'data_mode', 'dens', 'seed', 'nnei', 
+                'model', 'nlay', 'clip', 'clip_node', 'trim_rule', 'ns', 
+                'sampling_rate', 'att_mode', 'sha_rat']
+    att_keys = ['att_mode', 'att_submode', 'seed', 'data', 'gen_mode', 'gen_submode', 'data', 'dens', 'sha_rat',
+                'model', 'nlay', 'sampling_rate', 'clip', 'clip_node', 'trim_rule', 'ns']
         
     if args.data_mode != 'density': 
-        gen_keys.remove('density')
-        data_keys.remove('density')
-        att_keys.remove('density')
+        gen_keys.remove('dens')
+        data_keys.remove('dens')
+        att_keys.remove('dens')
     if args.general_mode == 'clean':
         
         gen_keys.remove('clip')

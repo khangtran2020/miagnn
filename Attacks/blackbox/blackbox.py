@@ -1,24 +1,23 @@
 import sys
+import wandb
 import torch
 import torchmetrics
 from typing import Dict, Tuple
-from rich import print as rprint
-from Attacks.utils import generate_nohop_graph, init_shadow_loader
-from Attacks.blackbox.train_eval import train_sha
+from rich.progress import Progress
+from Attacks.utils import generate_nohop_graph, init_shadow_loader, generate_attack_samples
+from Attacks.blackbox.train_eval import train_sha, train_bbattack
+from Data.dataset import Data
 from Utils.console import console
+from Utils.tracking import tracker_log
 from Models.model import NN, CustomNN
 from Models.utils import init_model
 
 def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, history:Dict, name:str):
 
-    if args.general_submode == 'ind':
-        tr_g, te_g, sha_g = graphs
-    else:
-        g, sha_g = graphs
+    tar_g, sha_g = graphs
 
     with console.status("Initializing Shadow Loader") as status:
         with torch.no_grad():
-
             if args.num_class > 1:
                 pred_fn = torch.nn.Softmax(dim=1).to(device)
             else:
@@ -29,13 +28,13 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
                 sha_g = sha_g.to(device)
                 shanh_g = shanh_g.to(device)
                 tar_model.to(device)
-                pred_sha = tar_model.full(sha_g, sha_g.ndata['feat'])
-                pred_shanh = tar_model.full(shanh_g, shanh_g.ndata['feat'])
-                sha_g.ndata['pred'] = pred_fn(pred_sha)
-                shanh_g.ndata['pred'] = pred_fn(pred_shanh)
+                pred = tar_model.full(sha_g, sha_g.ndata['feat'])
+                pred_nh = tar_model.full(shanh_g, shanh_g.ndata['feat'])
+                sha_g.ndata['pred'] = pred_fn(pred)
+                shanh_g.ndata['pred'] = pred_fn(pred_nh)
                 console.log(f'Generated prediction on shadow graphs and zero-hop shadow graph')
-                shatr_loader, shate_loader = init_shadow_loader(args=args, device=device, graph=sha_g)
-                shanhtr_loader, shanhte_loader = init_shadow_loader(args=args, device=device, graph=shanh_g)
+                shatr_loader, _ = init_shadow_loader(args=args, device=device, graph=sha_g)
+                shanhtr_loader, _ = init_shadow_loader(args=args, device=device, graph=shanh_g)
             else:
                 pass
         console.log(f'Done Initializing Shadow Loader: :white_check_mark:')
@@ -49,71 +48,101 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
     sha_model = train_sha(args=args, loader=shatr_loader, model=sha_model, device=device, history=history, name=f'{name}_sha')
     shanh_model = train_sha(args=args, loader=shanhtr_loader, model=shanh_model, device=device, history=history, name=f'{name}_shanh')
     
-    # sys.exit()
-    # with timeit(logger=logger, task='preparing-attack-data'):
+    with console.status("Initializing Attack Data") as status:
+        sha_model.to(device)
+        shanh_model.to(device)
+
+        with torch.no_grad():
+            sha_pred = sha_model.full(sha_g, sha_g.ndata['feat'])
+            shanh_pred = shanh_model.full(shanh_g, shanh_g.ndata['feat'])
+            sha_g.ndata['sha_pred'] = sha_pred
+            sha_g.ndata['shanh_pred'] = shanh_pred
+            tarnh_g = generate_nohop_graph(graph=tar_g)
+            tar_g = tar_g.to(device)
+            tarnh_g = tarnh_g.to(device)
+            pred = tar_model.full(tar_g, tar_g.ndata['feat'])
+            pred_nh = tar_model.full(tarnh_g, tarnh_g.ndata['feat'])
+            tar_g.ndata['pred'] = pred
+            tar_g.ndata['nh_pred'] = pred_nh
+            org_id_tr, x_tr, y_tr = generate_attack_samples(graph=sha_g, mode='shadow', device=device)
+            org_id_te, x_te, y_te = generate_attack_samples(graph=tar_g, mode='target', device=device)
+            new_dim = int(x_tr.size(dim=1) / 2)
+        tr_data = Data(X=x_tr, y=y_tr, id=org_id_tr)
+        te_data = Data(X=x_te, y=y_te, id=org_id_te)
+        console.log(f'Done Initializing Attack Data: :white_check_mark:')
+
+    atr_loader = torch.utils.data.DataLoader(tr_data, batch_size=args.att_bs, drop_last=True, shuffle=True)
+    ate_loader = torch.utils.data.DataLoader(te_data, batch_size=args.att_bs, drop_last=False, shuffle=False)
+    att_model = CustomNN(input_dim=new_dim, hidden_dim=64, output_dim=1, n_layer=3)
+    att_model = train_bbattack(args=args, tr_loader=atr_loader, te_loader=ate_loader, model=att_model, 
+                                device=device, history=history, name= f'{name}_attack')
     
-    #     shadow_model.load_state_dict(torch.load(args.save_path + f"{name['att']}_hops_shadow.pt"))
-    #     shadow_model_nohop.load_state_dict(torch.load(args.save_path + f"{name['att']}_nohop_shadow.pt"))
-        
-    #     with torch.no_grad():
+    
+    with console.status("Evaluating...") as status:
+        # rprint(f"Attack model: {att_model}")
 
-    #         shadow_model.to(device)
-    #         shadow_model_nohop.to(device)
-    #         shadow_conf = shadow_model.full(train_g, train_g.ndata['feat'])
-    #         shadow_conf_nohop = shadow_model_nohop.full(train_g_nohop, train_g_nohop.ndata['feat'])
-    #         train_g.ndata['shadow_conf'] = shadow_conf
-
-    #         x, y = generate_attack_samples(graph=train_g, conf=shadow_conf, nohop_conf=shadow_conf_nohop, mode='shadow', device=device)
-    #         x_test, y_test = generate_attack_samples(graph=train_g, conf=tr_conf, nohop_conf=tr_conf_nohop, mode='target', 
-    #                                                  te_graph=test_g, te_conf=te_conf, te_nohop_conf=te_conf_nohop, device=device)
+        with Progress(console=console) as progress:
             
-    #         test_distribution_shift(x_tr=x, x_te=x_test)
-    #         x = torch.cat([x, x_test], dim=0)
-    #         y = torch.cat([y, y_test], dim=0)
-    #         for i in range(x.size(dim=1)):
-    #             x[:, i] = (x[:,i] - x[:,i].mean()) / (x[:,i].std() + 1e-12)
-    #         num_test = x_test.size(0)
-    #         num_train = int((x.size(0) - num_test) * 0.8)
+            task1 = progress.add_task("[greed] Taking prediction...", total=len(ate_loader))
+            threshold = [0.1*i for i in range(1,10)]
+            metric = ['auc', 'acc', 'pre', 'rec', 'f1']
+            objective = torch.nn.BCEWithLogitsLoss(reduction='mean')
+            pred_fn = torch.nn.Softmax(dim=1).to(device)
+            node_dict = {}
+            label = torch.Tensor([]).to(device)
+            preds = torch.Tensor([]).to(device)
+            org_id = torch.Tensor([]).to(device)
 
-    #         new_dim = int(x.size(dim=1)/2)
-    #         # train test split
+            for bi, d in enumerate(ate_loader):
+                features, target, idx = d
+                features = features.to(device)
+                target = target.to(device)
+                predictions =  torch.squeeze(pred_fn(att_model(features)), dim=-1)
+                label = torch.cat((label, target), dim=0)
+                preds = torch.cat((preds, predictions), dim=0)
+                org_id = torch.cat((org_id, idx), dim=0)
+                progress.advance(task1)
 
-    #         tr_data = Data(X=x[:num_train], y=y[:num_train])
-    #         va_data = Data(X=x[num_train:-num_test], y=y[num_train:-num_test])
-    #         te_data = Data(X=x[-num_test:], y=y[-num_test:])
+            task2 = progress.add_task("[red] Assess with different threshold...", total=9)
+            for thres in threshold:
 
-    # # device = torch.device('cpu')
-    # with timeit(logger=logger, task='train-attack-model'):
+                metric_dict = {
+                    'auc': torchmetrics.classification.BinaryAUROC().to(device),
+                    'acc': torchmetrics.classification.BinaryAccuracy(threshold=thres).to(device),
+                    'pre': torchmetrics.classification.BinaryPrecision(threshold=thres).to(device),
+                    'rec': torchmetrics.classification.BinaryRecall(threshold=thres).to(device),
+                    'f1': torchmetrics.classification.BinaryF1Score(threshold=thres).to(device)
+                }
 
-    #     tr_loader = torch.utils.data.DataLoader(tr_data, batch_size=args.att_batch_size,
-    #                                             pin_memory=False, drop_last=True, shuffle=True)
+                results = {}
+                for m in metric:
+                    met = metric_dict[m]
+                    perf = met(pred, lab)
+                    results[f"Attack - best test/{m}"] = perf
+                    wandb.summary[f'Threshold: {thres}, BEST TEST {m}'] = perf
+                tracker_log(dct=results)
 
-    #     va_loader = torch.utils.data.DataLoader(va_data, batch_size=args.att_batch_size, num_workers=0, shuffle=False,
-    #                                             pin_memory=False, drop_last=False)
+                org_id = org_id.detach().tolist()
+                preds = preds.detach().tolist()
+                label = label.detach().tolist()
 
-    #     te_loader = torch.utils.data.DataLoader(te_data, batch_size=args.att_batch_size, num_workers=0, shuffle=False,
-    #                                             pin_memory=False, drop_last=False)
-        
-    #     attack_model = CustomNN(input_dim=new_dim, hidden_dim=64, output_dim=1, n_layer=3)
-    #     attack_optimizer = init_optimizer(optimizer_name=args.optimizer, model=attack_model, lr=args.att_lr)
+                for i, key in enumerate(org_id):
+                    if key in node_dict.keys():
+                        node_dict[key]['pred'].append(int(predictions[i] > thres))
+                    else:
+                        node_dict[key] = {
+                            'label': target[i],
+                            'pred': [int(predictions[i] > thres)]
+                        }
+                progress.advance(task2)
 
-    #     attack_model = train_attack(args=args, tr_loader=tr_loader, va_loader=va_loader, te_loader=te_loader,
-    #                                 attack_model=attack_model, epochs=args.att_epochs, optimizer=attack_optimizer,
-    #                                 name=name['att'], device=device, history=att_hist)
-
-    # attack_model.load_state_dict(torch.load(args.save_path + f"{name['att']}_attack.pt"))
-
-    # metric = ['auc', 'acc', 'pre', 'rec', 'f1']
-    # metric_dict = {
-    #     'auc': torchmetrics.classification.BinaryAUROC().to(device),
-    #     'acc': torchmetrics.classification.BinaryAccuracy().to(device),
-    #     'pre': torchmetrics.classification.BinaryPrecision().to(device),
-    #     'rec': torchmetrics.classification.BinaryRecall().to(device),
-    #     'f1': torchmetrics.classification.BinaryF1Score().to(device)
-    # }
-    # for met in metric:
-    #     te_loss, te_auc = eval_attack_step(model=attack_model, device=device, loader=te_loader,
-    #                                    metrics=metric_dict[met], criterion=torch.nn.BCELoss())
-    #     rprint(f"Attack {met}: {te_auc}")
-    
-    # return model_hist, att_hist
+            res_node_dict = {}
+            for key in node_dict.keys():
+                lab = node_dict[key]['label']
+                t = 0
+                for i in node_dict[key]['pred']:
+                    if i == lab: t+=1
+                res_node_dict[f'{key}'] = f'{t}'
+            wandb.summary[f'Node Correct / times'] = res_node_dict
+            console.log(f"Done Evaluating best model: :white_check_mark:")
+    return att_model, history

@@ -9,16 +9,9 @@ from Data.read import read_data, whitebox_split, blackbox_split
 from Data.utils import init_loader
 from Models.process import train, evaluate
 from Models.utils import init_model
-from Utils.utils import seed_everything, read_pickel, print_args, init_history, get_name
+from Utils.utils import seed_everything, read_pickel, print_args, init_history, get_name, save_dict
 from Utils.console import console, log_table
 from Utils.tracking import init_tracker, tracker_log_table
-
-# from Attacks.Runs.black_box import run as blackbox
-# from Attacks.Runs.white_box import run as whitebox
-# from Attacks.Runs.wb_simple import run as wanal
-# from Attacks.Utils.utils import print_args, init_history, get_name, save_dict
-# from Attacks.Utils.data_utils import shadow_split, shadow_split_whitebox_extreme, shadow_split_whitebox, read_data, shadow_split_whitebox_subgraph, shadow_split_whitebox_drop, shadow_split_whitebox_drop_ratio
-# from Models.init import init_model
 
 warnings.filterwarnings("ignore")
 
@@ -39,18 +32,15 @@ def run(args, current_time, device):
             console.log(f"History exist: :white_check_mark:, exist_data set to: {exist_data}")
         else:
             console.log(f"History exist: :x:, exist_data set to: {exist_data}")
-        
-        if args.general_submode == 'ind':
-            train_g, val_g, test_g, graph = read_data(args=args, history=data_hist, exist=exist_data)
-        else:
-            graph = read_data(args=args, history=data_hist, exist=exist_data)
+
+        tar_g, sha_g = read_data(args=args, history=data_hist, exist=exist_data)
         console.log(f"Done Reading data: :white_check_mark:")
 
     with console.status("Initializing Shadow Data") as status:
         if args.att_mode == 'blackbox':
-            shadow_graph = blackbox_split(graph=graph, ratio=args.sha_ratio, history=data_hist, exist=exist_data)
+            sha_g = blackbox_split(graph=sha_g, history=data_hist, exist=exist_data)
         elif args.att_mode == 'whitebox':
-            shadow_graph = whitebox_split(graph=graph, ratio=args.sha_ratio, history=data_hist, exist=exist_data, diag=True)
+            shadow_graph = whitebox_split(graph=sha_g, ratio=args.sha_ratio, history=data_hist, exist=exist_data)
         console.log(f"Done Initializing Shadow Data: :white_check_mark:")
 
     with console.status("Initializing Target Model") as status:
@@ -75,36 +65,21 @@ def run(args, current_time, device):
         console.log(f"Target model's configuration: {model}")
         
     if exist_model == False:
-        if args.general_submode == 'ind':
-            tr_loader, va_loader, te_loader = init_loader(args=args, device=device, graphs=(train_g, val_g, test_g))
-        else:
-            tr_loader, va_loader, te_loader = init_loader(args=args, device=device, graphs=graph)
-        model = train(args=args, tr_loader=tr_loader, va_loader=va_loader, model=model, device=device, history=model_hist, name=name['model'])
+        tr_loader, va_loader, te_loader = init_loader(args=args, device=device, graph=tar_g)
+        model, model_hist = train(args=args, tr_loader=tr_loader, va_loader=va_loader, model=model, device=device, history=model_hist, name=name['model'])
         evaluate(args=args, te_loader=te_loader, model=model, device=device, history=model_hist)
 
     if args.att_mode == 'blackbox':
-        if args.general_submode == 'ind':
-            graphs = (train_g, test_g, shadow_graph)
-        else:
-            graphs = (graph, shadow_graph)
-        bb_attack(args=args, graphs=graphs, tar_model=model, device=device, history=att_hist, name=name['att'])
-    # elif args.att_mode == 'whitebox':
-    #     model_hist, att_hist = whitebox(args=args, graph=(train_g, val_g, test_g, shadow_graph), model=model, device=device, history=history, name=name)
-    # elif args.att_mode == 'wanal':
-    #     model_hist, att_hist = wanal(args=args, graph=(train_g, val_g, test_g, shadow_graph), model=model, device=device, history=history, name=name)
-
-    # """
-    #     SAVE RUNNING HISTORY TO FILE
-    # """
-
-    # general_hist = {
-    #     'data': data_hist,
-    #     'model': model_hist,
-    #     'att': att_hist
-    # }
-    # general_path = args.res_path + f"{name['general']}.pkl"
-    # save_dict(path=general_path, dct=general_hist)
-    # rprint(f"Saved result at path {general_path}")
+        att_model, att_hist = bb_attack(args=args, graphs=(tar_g, sha_g), tar_model=model, device=device, history=att_hist, name=name['att'])
+        
+    general_hist = {
+        'data': data_hist,
+        'model': model_hist,
+        'att': att_hist
+    }
+    general_path = args.res_path + f"{name['general']}.pkl"
+    save_dict(path=general_path, dct=general_hist)
+    console.log(f"Saved result at path {general_path}.")
 
 if __name__ == "__main__":
     current_time = datetime.datetime.now()
