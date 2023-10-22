@@ -77,72 +77,70 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
     att_model = train_bbattack(args=args, tr_loader=atr_loader, te_loader=ate_loader, model=att_model, 
                                 device=device, history=history, name= f'{name}_attack')
     
-    
-    with console.status("Evaluating...") as status:
         # rprint(f"Attack model: {att_model}")
 
-        with Progress(console=console) as progress:
-            
-            task1 = progress.add_task("[greed] Taking prediction...", total=len(ate_loader))
-            threshold = [0.1*i for i in range(1,10)]
-            metric = ['auc', 'acc', 'pre', 'rec', 'f1']
-            objective = torch.nn.BCEWithLogitsLoss(reduction='mean')
-            pred_fn = torch.nn.Sigmoid().to(device)
-            node_dict = {}
-            label = torch.Tensor([]).to(device)
-            preds = torch.Tensor([]).to(device)
-            org_id = torch.Tensor([]).to(device)
+    with Progress(console=console) as progress:
+        
+        task1 = progress.add_task("[greed] Taking prediction...", total=len(ate_loader))
+        threshold = [0.1*i for i in range(1,10)]
+        metric = ['auc', 'acc', 'pre', 'rec', 'f1']
+        objective = torch.nn.BCEWithLogitsLoss(reduction='mean')
+        pred_fn = torch.nn.Sigmoid().to(device)
+        node_dict = {}
+        label = torch.Tensor([]).to(device)
+        preds = torch.Tensor([]).to(device)
+        org_id = torch.Tensor([]).to(device)
 
-            for bi, d in enumerate(ate_loader):
-                features, target, idx = d
-                features = features.to(device)
-                target = target.to(device)
-                predictions =  torch.squeeze(pred_fn(att_model(features)), dim=-1)
-                label = torch.cat((label, target), dim=0)
-                preds = torch.cat((preds, predictions), dim=0)
-                org_id = torch.cat((org_id, idx), dim=0)
-                progress.advance(task1)
+        for bi, d in enumerate(ate_loader):
+            features, target, idx = d
+            features = features.to(device)
+            target = target.to(device)
+            predictions =  torch.squeeze(pred_fn(att_model(features)), dim=-1)
+            label = torch.cat((label, target), dim=0)
+            preds = torch.cat((preds, predictions), dim=0)
+            org_id = torch.cat((org_id, idx), dim=0)
+            progress.advance(task1)
 
-            task2 = progress.add_task("[red] Assess with different threshold...", total=9)
-            for thres in threshold:
+        task2 = progress.add_task("[red] Assess with different threshold...", total=9)
+        for thres in threshold:
 
-                metric_dict = {
-                    'auc': torchmetrics.classification.BinaryAUROC().to(device),
-                    'acc': torchmetrics.classification.BinaryAccuracy(threshold=thres).to(device),
-                    'pre': torchmetrics.classification.BinaryPrecision(threshold=thres).to(device),
-                    'rec': torchmetrics.classification.BinaryRecall(threshold=thres).to(device),
-                    'f1': torchmetrics.classification.BinaryF1Score(threshold=thres).to(device)
-                }
+            metric_dict = {
+                'auc': torchmetrics.classification.BinaryAUROC().to(device),
+                'acc': torchmetrics.classification.BinaryAccuracy(threshold=thres).to(device),
+                'pre': torchmetrics.classification.BinaryPrecision(threshold=thres).to(device),
+                'rec': torchmetrics.classification.BinaryRecall(threshold=thres).to(device),
+                'f1': torchmetrics.classification.BinaryF1Score(threshold=thres).to(device)
+            }
 
-                results = {}
-                for m in metric:
-                    met = metric_dict[m]
-                    perf = met(pred, lab)
-                    results[f"Attack - best test/{m}"] = perf
-                    wandb.summary[f'Threshold: {thres}, BEST TEST {m}'] = perf
-                tracker_log(dct=results)
+            results = {}
+            for m in metric:
+                met = metric_dict[m]
+                perf = met(pred, lab)
+                results[f"Attack - best test/{m}"] = perf
+                wandb.summary[f'Threshold: {thres}, BEST TEST {m}'] = perf
+            tracker_log(dct=results)
 
-                org_id = org_id.detach().tolist()
-                preds = preds.detach().tolist()
-                label = label.detach().tolist()
+            org_id = org_id.detach().tolist()
+            preds = preds.detach().tolist()
+            label = label.detach().tolist()
 
-                for i, key in enumerate(org_id):
-                    if key in node_dict.keys():
-                        node_dict[key]['pred'].append(int(predictions[i] > thres))
-                    else:
-                        node_dict[key] = {
-                            'label': target[i],
-                            'pred': [int(predictions[i] > thres)]
-                        }
-                progress.advance(task2)
+            for i, key in enumerate(org_id):
+                if key in node_dict.keys():
+                    node_dict[key]['pred'].append(int(predictions[i] > thres))
+                else:
+                    node_dict[key] = {
+                        'label': target[i],
+                        'pred': [int(predictions[i] > thres)]
+                    }
+            progress.advance(task2)
 
-            res_node_dict = {}
-            for key in node_dict.keys():
-                lab = node_dict[key]['label']
-                t = 0
-                for i in node_dict[key]['pred']:
-                    if i == lab: t+=1
-                res_node_dict[f'{key}'] = f'{t}'
-            wandb.summary[f'Node Correct / times'] = res_node_dict
-            console.log(f"Done Evaluating best model: :white_check_mark:")
+        res_node_dict = {}
+        for key in node_dict.keys():
+            lab = node_dict[key]['label']
+            t = 0
+            for i in node_dict[key]['pred']:
+                if i == lab: t+=1
+            res_node_dict[f'{key}'] = f'{t}'
+        wandb.summary[f'Node Correct / times'] = res_node_dict
+        console.log(f"Done Evaluating best model: :white_check_mark:")
     return att_model, history
