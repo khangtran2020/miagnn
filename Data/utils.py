@@ -176,17 +176,17 @@ def percentage_pos(node:torch.Tensor, graph:dgl.DGLGraph):
 
 def init_loader(args, device:torch.device, graph:dgl.DGLGraph):
 
-    tr_sampler = dgl.dataloading.NeighborSampler([args.n_neighbor for i in range(args.n_layers)], mask='target')
-    te_sampler = dgl.dataloading.NeighborSampler([-1 for i in range(args.n_layers)], mask='target')
+    tr_sampler = dgl.dataloading.NeighborSampler([args.nnei for i in range(args.nlay)], mask='target')
+    te_sampler = dgl.dataloading.NeighborSampler([-1 for i in range(args.nlay)], mask='target')
     tr_nodes = get_index_by_value(a=graph.ndata['tr_mask'], val=1).to(device)
     va_nodes = get_index_by_value(a=graph.ndata['va_mask'], val=1).to(device)
     te_nodes = get_index_by_value(a=graph.ndata['te_mask'], val=1).to(device)
-    tr_loader = dgl.dataloading.DataLoader(graph.to(device), tr_nodes, tr_sampler, device=device, batch_size=args.batch_size, 
-                                        shuffle=True, drop_last=True, num_workers=0)    
-    va_loader = dgl.dataloading.DataLoader(graph.to(device), va_nodes, te_sampler, device=device, batch_size=args.batch_size, 
-                                        shuffle=False, drop_last=False, num_workers=0)
-    te_loader = dgl.dataloading.DataLoader(graph.to(device), te_nodes, te_sampler, device=device, batch_size=args.batch_size, 
-                                        shuffle=False, drop_last=False, num_workers=0)
+    tr_loader = dgl.dataloading.DataLoader(graph.to(device), tr_nodes, tr_sampler, device=device, batch_size=args.bs, 
+                                        shuffle=True, drop_last=True)    
+    va_loader = dgl.dataloading.DataLoader(graph.to(device), va_nodes, te_sampler, device=device, batch_size=args.bs, 
+                                        shuffle=False, drop_last=False)
+    te_loader = dgl.dataloading.DataLoader(graph.to(device), te_nodes, te_sampler, device=device, batch_size=args.bs, 
+                                        shuffle=False, drop_last=False)
     return tr_loader, va_loader, te_loader
 
 def remove_edge(graph:dgl.DGLGraph, mode:str):
