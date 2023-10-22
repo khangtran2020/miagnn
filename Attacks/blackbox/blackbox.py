@@ -115,7 +115,7 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
             results = {}
             for m in metric:
                 met = metric_dict[m]
-                perf = met(pred, lab)
+                perf = met(preds, label)
                 results[f"Attack - best test/{m}"] = perf
                 wandb.summary[f'Threshold: {thres}, BEST TEST {m}'] = perf
             tracker_log(dct=results)
