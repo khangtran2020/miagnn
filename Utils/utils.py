@@ -130,7 +130,7 @@ def get_name(args, current_date):
         gen_keys.remove('dens')
         data_keys.remove('dens')
         att_keys.remove('dens')
-    if args.general_mode == 'clean':
+    if args.gen_mode == 'clean':
         
         gen_keys.remove('clip')
         gen_keys.remove('clip_node')
