@@ -126,11 +126,11 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
 
             for i, key in enumerate(org_id):
                 if key in node_dict.keys():
-                    node_dict[key]['pred'].append(int(predictions[i] > thres))
+                    node_dict[key]['pred'].append(int(preds[i] > thres))
                 else:
                     node_dict[key] = {
                         'label': label[i],
-                        'pred': [int(predictions[i] > thres)]
+                        'pred': [int(preds[i] > thres)]
                     }
             progress.advance(task2)
 
