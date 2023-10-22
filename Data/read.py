@@ -74,7 +74,7 @@ def read_data(args, history, exist=False):
     args.num_feat = x.size(dim=1)
 
     if args.gen_submode == 'ind':
-        g_tr, g_va, g_te = graph_split(graph=tar_g, drop=False)
+        g_tr, g_va, g_te = graph_split(graph=tar_g)
         x = g_tr.ndata['feat']
         y = g_tr.ndata['label']
         nodes = g_tr.nodes()
