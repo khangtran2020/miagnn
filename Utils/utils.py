@@ -47,7 +47,7 @@ def print_args(args):
     if args.data_mode == 'none':
         keys.remove('dens')
 
-    if args.general_mode == 'clean':
+    if args.gen_mode == 'clean':
         keys.remove('clip')
         keys.remove('clip_node')
         keys.remove('trim_rule')

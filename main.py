@@ -88,7 +88,7 @@ if __name__ == "__main__":
     with console.status("Initializing...") as status:
         console.log(f'[bold][green]Initializing')
         arg_dict = print_args(args=args)
-        init_tracker(name=args.project_name, config=arg_dict)
+        init_tracker(name=args.proj_name, config=arg_dict)
         tracker_log_table(dct=arg_dict, name='config')
         seed_everything(args.seed)
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
