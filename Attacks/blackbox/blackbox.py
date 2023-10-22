@@ -129,7 +129,7 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
                     node_dict[key]['pred'].append(int(predictions[i] > thres))
                 else:
                     node_dict[key] = {
-                        'label': target[i],
+                        'label': label[i],
                         'pred': [int(predictions[i] > thres)]
                     }
             progress.advance(task2)
