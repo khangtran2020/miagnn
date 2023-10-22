@@ -1,6 +1,7 @@
 import dgl
 import torch
 import wandb
+from copy import deepcopy
 from rich.table import Table
 from functools import partial
 from Utils.console import console, log_table
@@ -187,7 +188,7 @@ def get_graph(data_name:str):
     graph, list_of_label = filter_class_by_count(graph=graph, min_count=min_count)
     return graph, list_of_label
 
-def blackbox_split(graph, history=None, exist=False):
+def blackbox_split(graph, history=None, exist=False, mode='joint'):
 
     if exist == False:
         y = graph.ndata['label']
@@ -217,6 +218,29 @@ def blackbox_split(graph, history=None, exist=False):
         test_mask[history['sha_te']] = 1
         graph.ndata['str_mask'] = train_mask
         graph.ndata['ste_mask'] = test_mask
+
+    if mode != 'joint':
+        num_node = graph.nodes().size(dim=0)
+        id_tr = graph.ndata['str_mask']
+        id_te = graph.ndata['ste_mask']
+        src_edges, dst_edges = graph.edges()
+
+        src_intr = id_tr[src_edges]
+        src_inte = id_te[src_edges]
+
+        dst_intr = id_tr[dst_edges]
+        dst_inte = id_te[dst_edges]
+        same_intr = torch.logical_and(src_intr, dst_intr)
+        same_inte = torch.logical_and(src_inte, dst_inte)
+        edge_mask_tar = torch.logical_or(same_intr, same_inte)
+
+        eid_tar = get_index_by_value(a=edge_mask_tar, val=1)
+        src_tar = src_edges[eid_tar]
+        dst_tar = dst_edges[eid_tar]
+        temp_targ = dgl.graph((src_tar, dst_tar), num_nodes=num_node)
+        for key in graph.ndata.keys():
+            temp_targ.ndata[key] = graph.ndata[key].clone()
+        graph = deepcopy(temp_targ)
 
     y = graph.ndata['label']
     src_edge, _ = graph.edges()
