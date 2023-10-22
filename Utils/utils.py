@@ -117,7 +117,7 @@ def init_history(args):
 def get_name(args, current_date):
 
     date_str = f'{current_date.day}{current_date.month}{current_date.year}-{current_date.hour}{current_date.minute}'
-    data_keys = ['data', 'seed', 'data_mode', 'dens']
+    data_keys = ['data', 'seed', 'data_mode', 'dens', 'att_mode']
     model_keys = ['data', 'gen_mode', 'seed', 'nnei', 'model', 'lr', 'nlay', 'hdim', 'epochs', 
                   'opt', 'clip', 'clip_node', 'trim_rule', 'ns', 'sampling_rate']
     gen_keys = ['data', 'gen_mode', 'data_mode', 'dens', 'seed', 'nnei', 

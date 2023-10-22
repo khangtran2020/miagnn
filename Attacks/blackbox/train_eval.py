@@ -135,7 +135,7 @@ def train_bbattack(args, tr_loader:torch.utils.data.DataLoader, te_loader:torch.
 
             # validation
             with torch.no_grad():
-
+                model.eval()
                 for bi, d in enumerate(te_loader):
                     features, target, _ = d
                     features = features.to(device)

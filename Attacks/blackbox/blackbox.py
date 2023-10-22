@@ -6,7 +6,7 @@ from typing import Dict, Tuple
 from rich.progress import Progress
 from Attacks.utils import generate_nohop_graph, init_shadow_loader, generate_attack_samples
 from Attacks.blackbox.train_eval import train_sha, train_bbattack
-from Data.dataset import Data
+from Attacks.dataset import Data
 from Utils.console import console
 from Utils.tracking import tracker_log
 from Models.model import NN, CustomNN
@@ -23,20 +23,18 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
             else:
                 pred_fn = torch.nn.Sigmoid().to(device)
 
-            if args.att_submode == 'joint':
-                shanh_g = generate_nohop_graph(graph=sha_g)
-                sha_g = sha_g.to(device)
-                shanh_g = shanh_g.to(device)
-                tar_model.to(device)
-                pred = tar_model.full(sha_g, sha_g.ndata['feat'])
-                pred_nh = tar_model.full(shanh_g, shanh_g.ndata['feat'])
-                sha_g.ndata['pred'] = pred_fn(pred)
-                shanh_g.ndata['pred'] = pred_fn(pred_nh)
-                console.log(f'Generated prediction on shadow graphs and zero-hop shadow graph')
-                shatr_loader, _ = init_shadow_loader(args=args, device=device, graph=sha_g)
-                shanhtr_loader, _ = init_shadow_loader(args=args, device=device, graph=shanh_g)
-            else:
-                pass
+            shanh_g = generate_nohop_graph(graph=sha_g)
+            sha_g = sha_g.to(device)
+            shanh_g = shanh_g.to(device)
+            tar_model.to(device)
+            pred = tar_model.full(sha_g, sha_g.ndata['feat'])
+            pred_nh = tar_model.full(shanh_g, shanh_g.ndata['feat'])
+            sha_g.ndata['pred'] = pred_fn(pred)
+            shanh_g.ndata['pred'] = pred_fn(pred_nh)
+            console.log(f'Generated prediction on shadow graphs and zero-hop shadow graph')
+            shatr_loader, _ = init_shadow_loader(args=args, device=device, graph=sha_g)
+            shanhtr_loader, _ = init_shadow_loader(args=args, device=device, graph=shanh_g)
+
         console.log(f'Done Initializing Shadow Loader: :white_check_mark:')
 
 
@@ -88,19 +86,20 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
         pred_fn = torch.nn.Sigmoid().to(device)
         node_dict = {}
 
-        label = torch.Tensor([]).to(device)
-        preds = torch.Tensor([]).to(device)
-        org_id = torch.Tensor([]).to(device)
+        with torch.no_grad():
+            label = torch.Tensor([]).to(device)
+            preds = torch.Tensor([]).to(device)
+            org_id = torch.Tensor([]).to(device)
 
-        for bi, d in enumerate(ate_loader):
-            features, target, idx = d
-            features = features.to(device)
-            target = target.to(device)
-            predictions =  torch.squeeze(pred_fn(att_model(features)), dim=-1)
-            label = torch.cat((label, target), dim=0)
-            preds = torch.cat((preds, predictions), dim=0)
-            org_id = torch.cat((org_id, idx), dim=0)
-            progress.advance(task1)
+            for bi, d in enumerate(ate_loader):
+                features, target, idx = d
+                features = features.to(device)
+                target = target.to(device)
+                predictions =  torch.squeeze(pred_fn(att_model(features)), dim=-1)
+                label = torch.cat((label, target), dim=0)
+                preds = torch.cat((preds, predictions), dim=0)
+                org_id = torch.cat((org_id, idx), dim=0)
+                progress.advance(task1)
 
         task2 = progress.add_task("[red] Assess with different threshold...", total=9)
         for thres in threshold:

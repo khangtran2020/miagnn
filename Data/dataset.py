@@ -94,16 +94,3 @@ class Arxiv(PygNodePropPredDataset):
             self.data[f'{split}_mask'] = mask
         if transform:
             self.data = transform(self.data)
-
-class Data(Dataset):
-    def __init__(self, X, y, id):
-        self.X = X
-        self.y = y
-        self.id = id
-        self.len = self.X.size(dim=0)
-
-    def __getitem__(self, index):
-        return self.X[index], self.y[index], self.id[index]
-
-    def __len__(self):
-        return self.len

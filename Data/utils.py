@@ -29,20 +29,13 @@ def node_split(args, graph:dgl.DGLGraph, val_size:float, test_size:float):
     
     node_id = np.arange(len(graph.nodes()))
     node_label = graph.ndata['label'].tolist()
-    
-    if args.att_mode == 'blackbox':
 
-        id_tar, id_sha, y_tar, _ = train_test_split(node_id, node_label, test_size=0.4, stratify=node_label)
-        id_tr, id_te, y_tr, _ = train_test_split(id_tar, y_tar, test_size=test_size, stratify=y_tar)
-        id_tr, id_va, _, _ = train_test_split(id_tr, y_tr, test_size=val_size, stratify=y_tr)
-
-        nnode_intr = int(args.sha_rat * len(id_tr))
-        if nnode_intr > 0.0:
-            id_trinsh = np.random.choice(a=id_tr, size=nnode_intr, replace=False)
-            id_sha = np.concatenate((id_sha, id_trinsh), axis=0)
-            del id_trinsh
-        del nnode_intr
-    
+    id_tr, id_te, y_tr, _ = train_test_split(node_id, node_label, test_size=test_size, stratify=node_label)
+    id_tr, id_va, y_tr, _ = train_test_split(id_tr, y_tr, test_size=val_size, stratify=y_tr)
+    _, id_sha, _, _ = train_test_split(id_tr, y_tr, test_size=args.sha_rat, stratify=y_tr)
+    if args.att_mode == 'whitebox':
+        id_sha = np.concatenate((id_sha, id_te), axis=0)
+        
     tr_mask = torch.zeros(graph.nodes().size(dim=0))
     va_mask = torch.zeros(graph.nodes().size(dim=0))
     te_mask = torch.zeros(graph.nodes().size(dim=0))
@@ -57,6 +50,7 @@ def node_split(args, graph:dgl.DGLGraph, val_size:float, test_size:float):
     graph.ndata['va_mask'] = va_mask.int()
     graph.ndata['te_mask'] = te_mask.int()
     graph.ndata['sh_mask'] = sh_mask.int()
+
     return graph
 
 def graph_split(graph:dgl.DGLGraph):
