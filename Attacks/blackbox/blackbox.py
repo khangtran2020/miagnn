@@ -87,6 +87,7 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
         objective = torch.nn.BCEWithLogitsLoss(reduction='mean')
         pred_fn = torch.nn.Sigmoid().to(device)
         node_dict = {}
+
         label = torch.Tensor([]).to(device)
         preds = torch.Tensor([]).to(device)
         org_id = torch.Tensor([]).to(device)
@@ -120,17 +121,17 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
                 wandb.summary[f'Threshold: {thres}, BEST TEST {m}'] = perf
             tracker_log(dct=results)
 
-            org_id = org_id.detach().tolist()
-            preds = preds.detach().tolist()
-            label = label.detach().tolist()
+            org_id = org_id.detach()
+            preds = preds.detach()
+            label = label.detach()
 
             for i, key in enumerate(org_id):
-                if key in node_dict.keys():
-                    node_dict[key]['pred'].append(int(preds[i] > thres))
+                if key.item() in node_dict.keys():
+                    node_dict[key.item()]['pred'].append(int(preds[i].item() > thres))
                 else:
                     node_dict[key] = {
-                        'label': label[i],
-                        'pred': [int(preds[i] > thres)]
+                        'label': label[i].item(),
+                        'pred': [int(preds[i].item() > thres)]
                     }
             progress.advance(task2)
 
