@@ -105,7 +105,7 @@ def read_data(args, history, exist=False):
         x = g_te.ndata['feat']
         y = g_te.ndata['label']
         nodes = g_te.nodes()
-        print(nodes)
+        print("Hello this is nodes of test:", nodes)
         src_edge, dst_edge = g_te.edges()
         prop_test = {
             '# nodes': f'{nodes.size(dim=0)}',
