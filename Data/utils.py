@@ -35,7 +35,12 @@ def node_split(args, graph:dgl.DGLGraph, val_size:float, test_size:float):
     _, id_sha, _, _ = train_test_split(id_tr, y_tr, test_size=args.sha_rat, stratify=y_tr)
     if args.att_mode == 'whitebox':
         id_sha = np.concatenate((id_sha, id_te), axis=0)
-        
+    
+    print(f"Id train: {id_tr.shape}")
+    print(f"Id valid: {id_va.shape}")
+    print(f"Id test: {id_te.shape}")
+    print(f"Id shadow: {id_sha.shape}")
+
     tr_mask = torch.zeros(graph.nodes().size(dim=0))
     va_mask = torch.zeros(graph.nodes().size(dim=0))
     te_mask = torch.zeros(graph.nodes().size(dim=0))
