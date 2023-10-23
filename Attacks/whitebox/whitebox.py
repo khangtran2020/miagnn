@@ -79,9 +79,9 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
         pred_fn = torch.nn.Sigmoid().to(device)
         node_dict = {}
 
-        label = torch.Tensor([]).to(device)
-        preds = torch.Tensor([]).to(device)
-        org_id = torch.Tensor([]).to(device)
+        label_tensor = torch.Tensor([]).to(device)
+        pred_tensor = torch.Tensor([]).to(device)
+        org_id_tensor = torch.Tensor([]).to(device)
 
         for bi, d in enumerate(te_loader):
             features, target = d
@@ -92,9 +92,9 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
             predictions = torch.nn.functional.sigmoid(predictions)
             predictions = torch.squeeze(predictions, dim=-1)
 
-            org_id = torch.cat((org_id, idx.detach()), dim=0)
-            preds = torch.cat((preds, predictions.detach()), dim=0)
-            label = torch.cat((label, target.detach()), dim=0)
+            org_id_tensor = torch.cat((org_id_tensor, idx.detach()), dim=0)
+            pred_tensor = torch.cat((pred_tensor, predictions.detach()), dim=0)
+            label_tensor = torch.cat((label_tensor, target.detach()), dim=0)
 
         task2 = progress.add_task("[red] Assess with different threshold...", total=9)
         for thres in threshold:
@@ -110,22 +110,22 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
             results = {}
             for m in metric:
                 met = metric_dict[m]
-                perf = met(preds, label)
+                perf = met(pred_tensor, label_tensor)
                 results[f"Attack - best test/{m}"] = perf
                 wandb.summary[f'Threshold: {thres}, BEST TEST {m}'] = perf
             tracker_log(dct=results)
 
-            org_id = org_id.detach()
-            preds = preds.detach()
-            label = label.detach()
+            org_id_tensor = org_id_tensor.detach()
+            pred_tensor = pred_tensor.detach()
+            label_tensor = label_tensor.detach()
 
-            for i, key in enumerate(org_id):
+            for i, key in enumerate(org_id_tensor):
                 if key.item() in node_dict.keys():
-                    node_dict[key.item()]['pred'].append(int(preds[i].item() > thres))
+                    node_dict[key.item()]['pred'].append(int(pred_tensor[i].item() > thres))
                 else:
                     node_dict[key] = {
-                        'label': label[i].item(),
-                        'pred': [int(preds[i].item() > thres)]
+                        'label': label_tensor[i].item(),
+                        'pred': [int(pred_tensor[i].item() > thres)]
                     }
             progress.advance(task2)
 
