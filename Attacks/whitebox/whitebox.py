@@ -85,14 +85,14 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
 
         for bi, d in enumerate(te_loader):
             features, target = d
-            org_id, label, loss_tensor, out_dict, grad_dict = features
+            idx, label, loss_tensor, out_dict, grad_dict = features
             feat = (label, loss_tensor, out_dict, grad_dict)
             target = target.to(device)
             predictions = att_model(feat)
             predictions = torch.nn.functional.sigmoid(predictions)
             predictions = torch.squeeze(predictions, dim=-1)
 
-            idx = torch.cat((idx, org_id.detach()), dim=0)
+            org_id = torch.cat((org_id, idx.detach()), dim=0)
             preds = torch.cat((preds, predictions.detach()), dim=0)
             label = torch.cat((label, target.detach()), dim=0)
 
