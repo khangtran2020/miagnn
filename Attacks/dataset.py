@@ -35,7 +35,7 @@ class ShadowData(Dataset):
         org_id = self.org_id[index]
         blocks = self.sample_blocks(seed_nodes=node)
         label = blocks[-1].dstdata["label"]
-        out_dict, pred = self.model.forwardout(blocks=blocks, x=blocks[0].srcdata["feat"])
+        out_dict, pred = self.model.getall(blocks=blocks, x=blocks[0].srcdata["feat"])
         loss = self.criterion(pred, label)
         loss.backward()
         grad_dict = {}
