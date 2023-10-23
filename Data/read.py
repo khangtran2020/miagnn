@@ -262,8 +262,8 @@ def whitebox_split(graph, history=None, exist=False, ratio=1.0):
     nodes = graph.nodes()
     if exist == False:
 
-        tr_org_idx = get_index_by_value(a=graph.ndata['train_mask'], val=1)
-        te_org_idx = get_index_by_value(a=graph.ndata['test_mask'], val=1)
+        tr_org_idx = get_index_by_value(a=graph.ndata['tr_mask'], val=1)
+        te_org_idx = get_index_by_value(a=graph.ndata['te_mask'], val=1)
 
         te_node = nodes[te_org_idx]
         tr_node = nodes[tr_org_idx]
