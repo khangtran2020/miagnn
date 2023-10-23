@@ -148,8 +148,8 @@ def get_shag_edge_info(graph:dgl.DGLGraph):
 
     info['# edge pos-pos'] = f'{int(indx_pos_pos.size(dim=0)/2)}'
     info['# edge neg-neg'] = f'{int(indx_neg_neg.size(dim=0)/2)}'
-    info['# edge pos-neg'] = f'{int(indx_pos_neg.size(dim=0))}'
-    info['# edge neg-pos'] = f'{int(indx_neg_pos.size(dim=0))}'
+    info['# edge pos-neg'] = f'{int(indx_pos_neg.size(dim=0)/2)}'
+    info['# edge neg-pos'] = f'{int(indx_neg_pos.size(dim=0)/2)}'
     info['# edge same'] = f'{int(indx_same.size(dim=0)/2)}'
     info['# edge diff'] = f'{int(indx_diff.size(dim=0)/2)}'
 
