@@ -138,3 +138,4 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
             res_node_dict[f'{key}'] = f'{t}'
         wandb.summary[f'Node Correct / times'] = res_node_dict
         console.log(f"Done Evaluating best model: :white_check_mark:")
+    return att_model, history
