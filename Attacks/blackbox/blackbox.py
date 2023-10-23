@@ -31,11 +31,11 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
             pred_nh = tar_model.full(shanh_g, shanh_g.ndata['feat'])
             sha_g.ndata['pred'] = pred_fn(pred)
             shanh_g.ndata['pred'] = pred_fn(pred_nh)
-            console.log(f'Generated prediction on shadow graphs and zero-hop shadow graph')
+            console.log(f"Generated prediction on shadow graphs: {sha_g.ndata['pred'].size()}, and zero-hop shadow graph: {shanh_g.ndata['pred'].size()}")
             shatr_loader, _ = init_shadow_loader(args=args, device=device, graph=sha_g)
             shanhtr_loader, _ = init_shadow_loader(args=args, device=device, graph=shanh_g)
 
-        console.log(f'Done Initializing Shadow Loader: :white_check_mark:')
+        console.log(f'Done Initializing Shadow Loader with size {len(shatr_loader)}, {len(shanhtr_loader)}: :white_check_mark:')
 
 
     # init shadow model
