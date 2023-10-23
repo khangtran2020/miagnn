@@ -5,6 +5,7 @@ import datetime
 import warnings
 from config import parse_args
 from Attacks.blackbox.blackbox import attack as bb_attack
+from Attacks.whitebox.whitebox import attack as wb_attack
 from Data.read import read_data, whitebox_split, blackbox_split
 from Data.utils import init_loader
 from Models.process import train, evaluate
@@ -71,6 +72,8 @@ def run(args, current_time, device):
 
     if args.att_mode == 'blackbox':
         att_model, att_hist = bb_attack(args=args, graphs=(tar_g, sha_g), tar_model=model, device=device, history=att_hist, name=name['att'])
+    else:
+        att_model, att_hist = wb_attack(args=args, graphs=(tar_g, sha_g), tar_model=model, device=device, history=att_hist, name=name['att'])
         
     general_hist = {
         'data': data_hist,
