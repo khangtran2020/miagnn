@@ -13,6 +13,7 @@ def init_shadow_loader(args, device: torch.device, graph:dgl.DGLGraph):
 
     tr_nid = get_index_by_value(a=graph.ndata['str_mask'], val=1).to(device)
     te_nid = get_index_by_value(a=graph.ndata['ste_mask'], val=1).to(device)
+    print("Size of tr nid:",tr_nid.size(), te_nid.size())
     sampler = dgl.dataloading.NeighborSampler([-1 for i in range(args.nlay)])
     tr_loader = dgl.dataloading.DataLoader(graph.to(device), tr_nid.to(device), sampler, device=device,
                                         batch_size=args.att_bs, shuffle=True, drop_last=True)
