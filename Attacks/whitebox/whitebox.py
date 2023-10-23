@@ -52,7 +52,7 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
                                                 drop_last=True, shuffle=True)
         te_loader = torch.utils.data.DataLoader(shte_dataset, batch_size=args.att_bs, collate_fn=collate_fn,
                                                 drop_last=False, shuffle=False)
-        
+        console.log(f"Length of tr_loader: {len(tr_loader)}, and te_loader: {len(te_loader)}")
         console.log(f"Out dim: {out_dim}")
         console.log(f"Grad dim: {grad_dim}")
         x, y = next(iter(tr_loader))
