@@ -51,6 +51,8 @@ def add_model_attack_group(group):
     group.add_argument("--sha_lr", type=float, default=0.001, help="learning rate")
     group.add_argument("--sha_epochs", type=int, default=100, help='training step')
     group.add_argument("--sha_rat", type=float, default=0.5, help="learning rate")
+    group.add_argument("--diff_rat", type=float, default=1.0, help="learning rate")
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
