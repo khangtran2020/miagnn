@@ -53,7 +53,6 @@ def add_model_attack_group(group):
     group.add_argument("--sha_rat", type=float, default=0.5, help="learning rate")
     group.add_argument("--diff_rat", type=float, default=1.0, help="learning rate")
 
-
 def parse_args():
     parser = argparse.ArgumentParser()
     exp_grp = parser.add_argument_group(title="Attack setting")
