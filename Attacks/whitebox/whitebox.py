@@ -26,9 +26,9 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
 
         out_keys = [f'out_{i}' for i in range(args.nlay)]
         out_dim = []
-        if args.n_layers > 1:
+        if args.nlay > 1:
             out_dim.append(args.hdim)
-            for i in range(0, args.n_layers - 2):
+            for i in range(0, args.nlay - 2):
                 out_dim.append(args.hdim)
             out_dim.append(args.num_class)
         else:
