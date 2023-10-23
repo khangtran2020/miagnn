@@ -35,7 +35,8 @@ def train_sha(args, loader:torch.utils.data.DataLoader, model:torch.nn.Module, d
     with Progress(console=console) as progress:
         task1 = progress.add_task("[red]Training...", total=args.sha_epochs)
         task2 = progress.add_task("[green]Updating...", total=len(loader))
-
+        
+        print(f"Length of sha_tr_loader: {len(loader)}")
         # progress.reset(task_id=task1)
         for epoch in range(args.sha_epochs):
             tr_loss = 0
@@ -56,7 +57,7 @@ def train_sha(args, loader:torch.utils.data.DataLoader, model:torch.nn.Module, d
                 ntr += preds.size(dim=0)
                 progress.advance(task2)
 
-            tr_loss = tr_loss / ntr 
+            tr_loss = tr_loss / (ntr+1e-12) 
             tr_perf = metrics.compute().item()
             metrics.reset()   
             progress.reset(task2)
@@ -104,7 +105,7 @@ def train_bbattack(args, tr_loader:torch.utils.data.DataLoader, te_loader:torch.
         task1 = progress.add_task("[red]Training...", total=args.att_epochs)
         task2 = progress.add_task("[green]Updating...", total=len(tr_loader))
         task3 = progress.add_task("[green]Evaluating...", total=len(te_loader))
-        
+        print(f"Length of attack tr loader: {len(tr_loader)}, and te loader: {len(te_loader)}")
         for epoch in range(args.att_epochs):
             tr_loss = 0
             ntr = 0
@@ -125,7 +126,7 @@ def train_bbattack(args, tr_loader:torch.utils.data.DataLoader, te_loader:torch.
                 ntr += predictions.size(dim=0)
                 progress.advance(task2)
             
-            tr_loss = tr_loss / ntr 
+            tr_loss = tr_loss / (ntr+1e-12)  
             tr_perf = metrics.compute().item()
             metrics.reset()   
             progress.reset(task2)
@@ -149,7 +150,7 @@ def train_bbattack(args, tr_loader:torch.utils.data.DataLoader, te_loader:torch.
                     nte += predictions.size(dim=0)
                     progress.advance(task3)
 
-            te_loss = te_loss / nte 
+            te_loss = te_loss / (nte+1e-12)  
             te_perf = metrics.compute().item()
             metrics.reset()   
             progress.reset(task3)
