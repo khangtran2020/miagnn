@@ -13,9 +13,7 @@ from Utils.tracking import tracker_log
 from Models.model import WbAttacker
 
 def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, history:Dict, name:str):
-
     tar_g, sha_g = graphs
-
     with console.status("Initializing Attack Loader") as status:
         
         shtr_dataset = ShadowData(graph=sha_g, model=tar_model, num_layer=args.nlay, device=device, mode='train', nnei=-1)
@@ -67,7 +65,6 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
             console.log(f"Grad dict at key {key} has size: {grad_dict[key].size()}")
         # sys.exit()
         console.log(f'Done Initializing Attack Loader: :white_check_mark:')
-
     att_model = WbAttacker(label_dim=args.num_class, loss_dim=1, out_dim_list=out_dim, grad_dim_list=grad_dim, 
                            out_keys=out_keys, model_keys=model_keys, num_filters=4, device=device)
     att_model = train(args=args, tr_loader=tr_loader, te_loader=te_loader, model=att_model, device=device, 

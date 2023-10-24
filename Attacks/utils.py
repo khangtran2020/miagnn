@@ -39,7 +39,7 @@ def generate_attack_samples(graph, mode, device):
     top_k, _ = torch.topk(graph.ndata[pred_mask], k=2, dim=1)
     top_k_nh, _ = torch.topk(graph.ndata[prednh_mask], k=2, dim=1)
 
-    samples = torch.cat((top_k, top_k_nh), dim=1).to(device)
+    samples = torch.cat((graph.ndata[pred_mask], graph.ndata[prednh_mask]), dim=1).to(device)
 
     perm = torch.randperm(num_train, device=device)[:num_half]
     idx = get_index_by_value(a=graph.ndata[tr_mask], val=1)
