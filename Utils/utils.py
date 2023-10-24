@@ -43,7 +43,7 @@ def print_args(args):
     arg_dict = {}
     keys = ['gen_mode', 'gen_submode', 'seed', 'met', 'data', 'data_mode', 'dens', 'bs',
             'nnei', 'model', 'lr', 'nlay', 'epochs', 'clip', 'clip_node', 'trim_rule', 'ns', 'debug', 'device',
-            'att_mode', 'att_submode', 'att_lay', 'att_hdim', 'att_lr', 'att_bs', 'att_epochs', 'sha_lr', 'sha_epochs', 'sha_rat']
+            'att_mode', 'att_submode', 'att_lay', 'att_hdim', 'att_lr', 'att_bs', 'att_epochs', 'sha_lr', 'sha_epochs', 'sha_rat', 'diff_rat']
     if args.data_mode == 'none':
         keys.remove('dens')
 
@@ -124,7 +124,7 @@ def get_name(args, current_date):
                 'model', 'nlay', 'clip', 'clip_node', 'trim_rule', 'ns', 
                 'sampling_rate', 'att_mode', 'sha_rat']
     att_keys = ['att_mode', 'att_submode', 'seed', 'data', 'gen_mode', 'gen_submode', 'data', 'dens', 'sha_rat',
-                'model', 'nlay', 'sampling_rate', 'clip', 'clip_node', 'trim_rule', 'ns']
+                'model', 'nlay', 'sampling_rate', 'clip', 'clip_node', 'trim_rule', 'ns', 'diff_rat']
         
     if args.data_mode != 'density': 
         gen_keys.remove('dens')
