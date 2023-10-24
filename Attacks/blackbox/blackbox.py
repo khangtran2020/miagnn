@@ -4,6 +4,7 @@ import torch
 import torchmetrics
 from typing import Dict, Tuple
 from rich.progress import Progress
+from rich.pretty import pretty_repr
 from Attacks.utils import generate_nohop_graph, init_shadow_loader, generate_attack_samples
 from Attacks.blackbox.train_eval import train_sha, train_bbattack
 from Attacks.dataset import Data
@@ -32,10 +33,10 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
             sha_g.ndata['pred'] = pred_fn(pred)
             shanh_g.ndata['pred'] = pred_fn(pred_nh)
             console.log(f"Generated prediction on shadow graphs: {sha_g.ndata['pred'].size()}, and zero-hop shadow graph: {shanh_g.ndata['pred'].size()}")
-            shatr_loader, _ = init_shadow_loader(args=args, device=device, graph=sha_g)
-            shanhtr_loader, _ = init_shadow_loader(args=args, device=device, graph=shanh_g)
+            shatr_loader, shate_loader = init_shadow_loader(args=args, device=device, graph=sha_g)
+            shanhtr_loader, shate_loader = init_shadow_loader(args=args, device=device, graph=shanh_g)
 
-        console.log(f'Done Initializing Shadow Loader with size {len(shatr_loader)}, {len(shanhtr_loader)}: :white_check_mark:')
+        console.log(f'Done Initializing Shadow Loader with size {len(shatr_loader)}, {len(shate_loader)}: :white_check_mark:')
 
 
     # init shadow model
@@ -101,7 +102,8 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
                 org_id = torch.cat((org_id, idx), dim=0)
                 progress.advance(task1)
 
-        task2 = progress.add_task("[red] Assess with different threshold...", total=9)
+        task2 = progress.add_task("[red] Assess with different threshold...", total=len(threshold))
+
         for thres in threshold:
 
             metric_dict = {
@@ -125,14 +127,16 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
             label = label.detach()
 
             for i, key in enumerate(org_id):
-                if key.item() in node_dict.keys():
-                    node_dict[key.item()]['pred'].append(int(preds[i].item() > thres))
+                if key.int().item() in node_dict.keys():
+                    node_dict[key.item().item()]['pred'].append(int(preds[i].item() > thres))
                 else:
                     node_dict[key] = {
                         'label': label[i].item(),
                         'pred': [int(preds[i].item() > thres)]
                     }
             progress.advance(task2)
+
+        console.log(pretty_repr(node_dict))
 
         res_node_dict = {}
         for key in node_dict.keys():
