@@ -4,6 +4,7 @@ import torch
 import torchmetrics
 from typing import Dict, Tuple
 from functools import partial
+from rich.pretty import pretty_repr
 from rich.progress import Progress
 from Attacks.dataset import ShadowData, custom_collate
 from Attacks.whitebox.train_eval import train
@@ -129,6 +130,7 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
                     }
             progress.advance(task2)
 
+        console.log(pretty_repr(node_dict))
         res_node_dict = {}
         for key in node_dict.keys():
             lab = node_dict[key]['label']
