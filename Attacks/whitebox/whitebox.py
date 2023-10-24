@@ -96,7 +96,7 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
             pred_tensor = torch.cat((pred_tensor, predictions.detach()), dim=0)
             label_tensor = torch.cat((label_tensor, target.detach()), dim=0)
 
-        task2 = progress.add_task("[red] Assess with different threshold...", total=9)
+        task2 = progress.add_task("[red] Assess with different threshold...", total=len(threshold))
         for thres in threshold:
 
             metric_dict = {
@@ -120,10 +120,10 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
             label_tensor = label_tensor.detach()
 
             for i, key in enumerate(org_id_tensor):
-                if key.item() in node_dict.keys():
-                    node_dict[key.item()]['pred'].append(int(pred_tensor[i].item() > thres))
+                if key.int().item() in node_dict.keys():
+                    node_dict[key.int().item()]['pred'].append(int(pred_tensor[i].item() > thres))
                 else:
-                    node_dict[key] = {
+                    node_dict[key.int().item()] = {
                         'label': label_tensor[i].item(),
                         'pred': [int(pred_tensor[i].item() > thres)]
                     }
