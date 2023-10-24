@@ -68,7 +68,7 @@ def read_data(args, history, exist=False):
         graph.ndata['te_mask'] = torch.LongTensor(id_te)
         graph.ndata['sh_mask'] = torch.LongTensor(id_sh)
 
-    tar_g, sha_g = remove_edge(graph=graph, mode=args.att_mode, submode=args.gen_submode)
+    tar_g, sha_g = remove_edge(graph=graph, mode=args.gen_submode)
     console.log(f"Done splitting train/val/test: :white_check_mark:")
 
     args.num_class = len(list_of_label)
@@ -377,7 +377,7 @@ def whitebox_split(graph, history=None, exist=False, ratio=1.0):
         temp_targ.ndata[key] = graph.ndata[key].clone()
     graph = deepcopy(temp_targ)
 
-    if (ratio > 0.0) and (ratio <= 1):
+    if (ratio >= 0.0) and (ratio < 1):
         num_node = graph.nodes().size(dim=0)
         id_pos = graph.ndata['pos_mask_te']
         id_neg = graph.ndata['neg_mask_te']

@@ -30,10 +30,14 @@ def node_split(args, graph:dgl.DGLGraph, val_size:float, test_size:float):
     node_id = np.arange(len(graph.nodes()))
     node_label = graph.ndata['label'].tolist()
 
-    id_tr, id_te, y_tr, _ = train_test_split(node_id, node_label, test_size=test_size, stratify=node_label)
-    id_tr, id_va, y_tr, _ = train_test_split(id_tr, y_tr, test_size=val_size, stratify=y_tr)
-    _, id_sha, _, _ = train_test_split(id_tr, y_tr, test_size=args.sha_rat, stratify=y_tr)
-    if args.att_mode == 'whitebox':
+    if args.att_mode == 'blackbox':
+        id_tr, id_te, y_tr, _ = train_test_split(node_id, node_label, test_size=test_size, stratify=node_label)
+        id_tr, id_va, y_tr, _ = train_test_split(id_tr, y_tr, test_size=val_size, stratify=y_tr)
+        _, id_sha, _, _ = train_test_split(node_id, node_label, test_size=args.sha_rat, stratify=node_label)
+    elif args.att_mode == 'whitebox':
+        id_tr, id_te, y_tr, _ = train_test_split(node_id, node_label, test_size=args.sha_rat, stratify=node_label)
+        id_tr, id_va, y_tr, _ = train_test_split(id_tr, y_tr, test_size=val_size, stratify=y_tr)
+        _, id_sha, _, _ = train_test_split(id_tr, y_tr, test_size=len(id_te) / len(id_tr), stratify=y_tr)
         id_sha = np.concatenate((id_sha, id_te), axis=0)
 
     tr_mask = torch.zeros(graph.nodes().size(dim=0))
@@ -183,26 +187,19 @@ def init_loader(args, device:torch.device, graph:dgl.DGLGraph):
                                         shuffle=False, drop_last=False)
     return tr_loader, va_loader, te_loader
 
-def remove_edge(graph:dgl.DGLGraph, mode:str, submode:str):
+def remove_edge(graph:dgl.DGLGraph, mode:str):
 
-    if mode == 'blackbox':
-        num_node = graph.nodes().size(dim=0)
-        sha_nodes = get_index_by_value(a=graph.ndata['sh_mask'], val=1)
-        tar_nodes = get_index_by_value(a=graph.ndata['sh_mask'], val=0)
-        sha_g = graph.subgraph(sha_nodes)
-        tar_g = graph.subgraph(tar_nodes)
-    else:
-        num_node = graph.nodes().size(dim=0)
-        sha_nodes = get_index_by_value(a=graph.ndata['sh_mask'], val=1)
+    num_node = graph.nodes().size(dim=0)
+    sha_nodes = get_index_by_value(a=graph.ndata['sh_mask'], val=1)
 
-        tr_nodes = get_index_by_value(a=graph.ndata['tr_mask'], val=1)
-        va_nodes = get_index_by_value(a=graph.ndata['va_mask'], val=1)
-        te_nodes = get_index_by_value(a=graph.ndata['te_mask'], val=1)
-        tar_nodes = torch.cat((tr_nodes, va_nodes, te_nodes), dim=0)
-        sha_g = graph.subgraph(sha_nodes)
-        tar_g = graph.subgraph(tar_nodes)
+    tr_nodes = get_index_by_value(a=graph.ndata['tr_mask'], val=1)
+    va_nodes = get_index_by_value(a=graph.ndata['va_mask'], val=1)
+    te_nodes = get_index_by_value(a=graph.ndata['te_mask'], val=1)
+    tar_nodes = torch.cat((tr_nodes, va_nodes, te_nodes), dim=0).unique()
+    sha_g = graph.subgraph(sha_nodes)
+    tar_g = graph.subgraph(tar_nodes)
         
-    if submode == 'ind':
+    if mode == 'ind':
         num_node = tar_g.nodes().size(dim=0)
         id_tr = tar_g.ndata['tr_mask']
         id_va = tar_g.ndata['va_mask']
