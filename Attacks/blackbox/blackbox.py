@@ -130,7 +130,7 @@ def attack(args, graphs:Tuple, tar_model:torch.nn.Module, device:torch.device, h
                 if key.int().item() in node_dict.keys():
                     node_dict[key.item().item()]['pred'].append(int(preds[i].item() > thres))
                 else:
-                    node_dict[key] = {
+                    node_dict[key.int().item()] = {
                         'label': label[i].item(),
                         'pred': [int(preds[i].item() > thres)]
                     }
