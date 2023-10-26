@@ -3,7 +3,8 @@ import torch
 import numpy as np
 from copy import deepcopy
 from sklearn.model_selection import train_test_split
-from Utils.utils import get_index_by_value
+from Utils.utils import get_index_by_value, get_index_by_list
+from Utils.console import console
 
 def drop_isolated_node(graph:dgl.DGLGraph):
     mask = torch.zeros_like(graph.nodes())
@@ -31,15 +32,20 @@ def node_split(args, graph:dgl.DGLGraph, val_size:float, test_size:float):
     node_label = graph.ndata['label'].tolist()
 
     if args.att_mode == 'blackbox':
-        id_tr, id_te, y_tr, _ = train_test_split(node_id, node_label, test_size=test_size, stratify=node_label)
-        id_tr, id_va, y_tr, _ = train_test_split(id_tr, y_tr, test_size=val_size, stratify=y_tr)
-        _, id_sha, _, _ = train_test_split(node_id, node_label, test_size=args.sha_rat, stratify=node_label)
+        id_tr, id_te, y_tr, y_te = train_test_split(node_id, node_label, test_size=test_size, stratify=node_label)
+        id_tr, id_va, y_tr, y_va = train_test_split(id_tr, y_tr, test_size=val_size, stratify=y_tr)
+        id_tar, id_sha, y_tar, y_sha = train_test_split(node_id, node_label, test_size=args.sha_rat, stratify=node_label)
     elif args.att_mode == 'whitebox':
-        id_tr, id_te, y_tr, _ = train_test_split(node_id, node_label, test_size=args.sha_rat, stratify=node_label)
+        id_tr, id_te, y_tr, y_te = train_test_split(node_id, node_label, test_size=test_size, stratify=node_label)
         id_tr, id_va, y_tr, _ = train_test_split(id_tr, y_tr, test_size=val_size, stratify=y_tr)
-        _, id_sha, _, _ = train_test_split(id_tr, y_tr, test_size=len(id_te) / len(id_tr), stratify=y_tr)
-        id_sha = np.concatenate((id_sha, id_te), axis=0)
-
+        if args.debug == 0:
+            _, id_sha, _, _ = train_test_split(id_tr, y_tr, test_size=args.sha_rat, stratify=y_tr)
+            id_sha = np.concatenate((id_sha, id_te), axis=0)
+        else:
+            _, id_sha_tr, _, _ = train_test_split(id_tr, y_tr, test_size= (200 / len(id_tr)), stratify=y_tr)
+            _, id_sha_te, _, _ = train_test_split(id_te, y_te, test_size= (200 / len(id_te)), stratify=y_te)
+            id_sha = np.concatenate((id_sha_tr, id_sha_te), axis=0)
+        
     tr_mask = torch.zeros(graph.nodes().size(dim=0))
     va_mask = torch.zeros(graph.nodes().size(dim=0))
     te_mask = torch.zeros(graph.nodes().size(dim=0))
@@ -187,7 +193,7 @@ def init_loader(args, device:torch.device, graph:dgl.DGLGraph):
                                         shuffle=False, drop_last=False)
     return tr_loader, va_loader, te_loader
 
-def remove_edge(graph:dgl.DGLGraph, mode:str):
+def remove_edge(graph:dgl.DGLGraph, mode:str, debug:int=0):
 
     num_node = graph.nodes().size(dim=0)
     sha_nodes = get_index_by_value(a=graph.ndata['sh_mask'], val=1)
@@ -200,6 +206,7 @@ def remove_edge(graph:dgl.DGLGraph, mode:str):
     tar_g = graph.subgraph(tar_nodes)
         
     if mode == 'ind':
+
         num_node = tar_g.nodes().size(dim=0)
         id_tr = tar_g.ndata['tr_mask']
         id_va = tar_g.ndata['va_mask']
@@ -218,6 +225,31 @@ def remove_edge(graph:dgl.DGLGraph, mode:str):
         same_inva = torch.logical_and(src_inva, dst_inva)
         same_inte = torch.logical_and(src_inte, dst_inte)
 
+        if debug:
+            with console.status(f"Check overlaping of edges in inductive setting") as status:
+                num_tred_in_vaed = get_index_by_list(arr=same_intr, test_arr=same_inva).size(dim=0)
+                num_vaed_in_tred = get_index_by_list(arr=same_inva, test_arr=same_intr).size(dim=0)
+                num_tred_in_teed = get_index_by_list(arr=same_intr, test_arr=same_inte).size(dim=0)
+                num_teed_in_tred = get_index_by_list(arr=same_inte, test_arr=same_intr).size(dim=0)
+                num_teed_in_vaed = get_index_by_list(arr=same_inte, test_arr=same_inva).size(dim=0)
+                num_vaed_in_teed = get_index_by_list(arr=same_inva, test_arr=same_inte).size(dim=0)
+                
+                if (num_tred_in_vaed == 0) & (num_vaed_in_tred == 0):
+                    console.log(f"[green] No overlap between train & valid:[\green] :white_check_mark:")
+                else:
+                    console.log(f"Edges overlap between train & valid: :x:\n{get_index_by_list(arr=same_intr, test_arr=same_inva)}\n{get_index_by_list(arr=same_inva, test_arr=same_intr)}")
+                    
+                if (num_tred_in_teed == 0) & (num_teed_in_tred == 0):
+                    console.log(f"[green] No overlap between train & test:[\green] :white_check_mark:")
+                else:
+                    console.log(f"Edges overlap between train & test: :x:\n{get_index_by_list(arr=same_intr, test_arr=same_inte)}\n{get_index_by_list(arr=same_inte, test_arr=same_inva)}")
+                    
+                if (num_teed_in_vaed == 0) & (num_vaed_in_teed == 0):
+                    console.log(f"[green] No overlap between test & valid:[\green] :white_check_mark:")
+                else:
+                    console.log(f"Edges overlap between valid & test: :x:\n{get_index_by_list(arr=same_inte, test_arr=same_inva)}\n{get_index_by_list(arr=same_inva, test_arr=same_inte)}")
+        
+
         edge_mask_tar = torch.logical_or(same_intr, same_inva)
         edge_mask_tar = torch.logical_or(edge_mask_tar, same_inte)
         eid_tar = get_index_by_value(a=edge_mask_tar, val=1)
@@ -228,3 +260,45 @@ def remove_edge(graph:dgl.DGLGraph, mode:str):
             temp_targ.ndata[key] = tar_g.ndata[key].clone()
         tar_g = deepcopy(temp_targ)
     return tar_g, sha_g
+
+def check_overlap(graph:dgl.DGLGraph, mode:str):
+
+    num_node = graph.nodes().size(dim=0)
+    if mode == 'target':
+        with console.status(f"Check overlaping of {mode} graph") as status:
+            tr_nodes = get_index_by_value(a=graph.ndata['tr_mask'], val=1)
+            va_nodes = get_index_by_value(a=graph.ndata['va_mask'], val=1)
+            te_nodes = get_index_by_value(a=graph.ndata['te_mask'], val=1)
+
+            num_vanode_in_trnode = get_index_by_list(arr=va_nodes, test_arr=tr_nodes).size(dim=0)
+            num_trnode_in_vanode = get_index_by_list(arr=tr_nodes, test_arr=va_nodes).size(dim=0)
+            num_tenode_in_trnode = get_index_by_list(arr=te_nodes, test_arr=tr_nodes).size(dim=0)
+            num_trnode_in_tenode = get_index_by_list(arr=tr_nodes, test_arr=te_nodes).size(dim=0)
+            num_vanode_in_tenode = get_index_by_list(arr=va_nodes, test_arr=te_nodes).size(dim=0)
+            num_tenode_in_vanode = get_index_by_list(arr=te_nodes, test_arr=va_nodes).size(dim=0)
+
+            if (num_vanode_in_trnode == 0) & (num_trnode_in_vanode == 0):
+                console.log(f"[green] No overlap between train & valid:[\green] :white_check_mark:")
+            else:
+                console.log(f"Node overlap between train & valid: :x:\n{get_index_by_list(arr=va_nodes, test_arr=tr_nodes)}\n{get_index_by_list(arr=tr_nodes, test_arr=va_nodes)}")
+                
+            if (num_tenode_in_trnode == 0) & (num_trnode_in_tenode == 0):
+                console.log(f"[green] No overlap between train & test:[\green] :white_check_mark:")
+            else:
+                console.log(f"Node overlap between train & test: :x:\n{get_index_by_list(arr=te_nodes, test_arr=tr_nodes)}\n{get_index_by_list(arr=tr_nodes, test_arr=te_nodes)}")
+                
+            if (num_vanode_in_tenode == 0) & (num_tenode_in_vanode == 0):
+                console.log(f"[green] No overlap between test & valid:[\green] :white_check_mark:")
+            else:
+                console.log(f"Node overlap between valid & test: :x:\n{get_index_by_list(arr=va_nodes, test_arr=te_nodes)}\n{get_index_by_list(arr=te_nodes, test_arr=te_nodes)}")
+    else:
+        with console.status(f"Check overlaping of {mode} graph") as status: 
+            tr_nodes = get_index_by_value(a=graph.ndata['str_mask'], val=1)
+            te_nodes = get_index_by_value(a=graph.ndata['ste_mask'], val=1)
+
+            num_tenode_in_trnode = get_index_by_list(arr=te_nodes, test_arr=tr_nodes).size(dim=0)
+            num_trnode_in_tenode = get_index_by_list(arr=tr_nodes, test_arr=te_nodes).size(dim=0)             
+            if (num_tenode_in_trnode == 0) & (num_trnode_in_tenode == 0):
+                console.log(f"[green] No overlap between train & test:[\green] :white_check_mark:")
+            else:
+                console.log(f"Node overlap between train & test: :x:\n{get_index_by_list(arr=te_nodes, test_arr=tr_nodes)}\n{get_index_by_list(arr=tr_nodes, test_arr=te_nodes)}")

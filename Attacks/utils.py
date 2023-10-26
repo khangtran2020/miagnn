@@ -20,7 +20,7 @@ def init_shadow_loader(args, device: torch.device, graph:dgl.DGLGraph):
                                            batch_size=args.att_bs, shuffle=False, drop_last=False)
     return tr_loader, te_loader
 
-def generate_attack_samples(graph, mode, device):
+def generate_attack_samples(args, graph:dgl.DGLGraph, mode:str, device:torch.device): 
 
     tr_mask = 'tr_mask' if mode == 'target' else 'str_mask'
     te_mask = 'te_mask' if mode == 'target' else 'ste_mask'
@@ -30,7 +30,11 @@ def generate_attack_samples(graph, mode, device):
     num_classes = graph.ndata[pred_mask].size(1)
     num_train = graph.ndata[tr_mask].sum()
     num_test = graph.ndata[te_mask].sum()
-    num_half = min(num_train, num_test)
+    
+    if args.debug == 0:
+        num_half = min(num_train, num_test)
+    else:
+        num_half = 200
 
     # print(graph.ndata[pred_mask].size(), graph.ndata[prednh_mask].size())
 
