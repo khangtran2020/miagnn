@@ -41,7 +41,7 @@ def run(args, current_time, device):
         if args.att_mode == 'blackbox':
             sha_g = blackbox_split(graph=sha_g, history=data_hist, exist=exist_data, mode=args.att_submode)
         elif args.att_mode == 'whitebox':
-            sha_g = whitebox_split(graph=sha_g, history=data_hist, exist=exist_data, ratio=args.diff_rat)
+            sha_g = whitebox_split(graph=sha_g, history=data_hist, exist=exist_data, ratio=args.diff_rat, debug=args.debug)
         console.log(f"Done Initializing Shadow Data: :white_check_mark:")
 
     with console.status("Initializing Target Model") as status:

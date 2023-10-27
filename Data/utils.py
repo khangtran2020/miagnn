@@ -1,6 +1,7 @@
 import dgl
 import torch
 import numpy as np
+import networkx as nx
 from copy import deepcopy
 from sklearn.model_selection import train_test_split
 from Utils.utils import get_index_by_value, get_index_by_list
@@ -302,3 +303,6 @@ def check_overlap(graph:dgl.DGLGraph, mode:str):
                 console.log(f"[green] No overlap between train & test:[\green] :white_check_mark:")
             else:
                 console.log(f"Node overlap between train & test: :x:\n{get_index_by_list(arr=te_nodes, test_arr=tr_nodes)}\n{get_index_by_list(arr=tr_nodes, test_arr=te_nodes)}")
+
+def shadow_visualization(graph:dgl.DGLGraph, mask:str):
+    pass

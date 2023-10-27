@@ -245,7 +245,7 @@ def blackbox_split(args, graph:dgl.DGLGraph, history=None, exist=False, mode='jo
     tracker_log_table(dct=prop_dict, name='Shadow graph of blackbox attack')
     return graph
 
-def whitebox_split(graph:dgl.DGLGraph, history:Dict, exist:bool, ratio:float, debug:bool):
+def whitebox_split(graph:dgl.DGLGraph, history:Dict, exist:bool, ratio:float, debug:bool=0):
 
     nodes = graph.nodes()
 
