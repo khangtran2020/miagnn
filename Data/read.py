@@ -56,7 +56,6 @@ def read_data(args, history, exist=False):
     tar_g, sha_g = remove_edge(graph=graph, mode=args.gen_submode, debug=args.debug)
     if args.debug == 1:
         check_overlap(graph=tar_g, mode='target')
-        check_overlap(graph=sha_g, mode='shadow')
     console.log(f"Done splitting train/val/test: :white_check_mark:")
 
     args.num_class = len(list_of_label)
