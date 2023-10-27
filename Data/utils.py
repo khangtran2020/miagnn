@@ -260,7 +260,7 @@ def remove_edge(graph:dgl.DGLGraph, mode:str, debug:int=0):
                 console.log(f"Edges overlap between valid & test: :x:\n{get_index_by_list(arr=same_inte, test_arr=same_inva)}\n{get_index_by_list(arr=same_inva, test_arr=same_inte)}")
     
 
-        id_edge = torch.cat((idx_eintr, idx_einva, idx_einte), dim=0).sort()
+        id_edge, _ = torch.cat((idx_eintr, idx_einva, idx_einte), dim=0).sort()
         src_tar = src_edges[id_edge]
         dst_tar = dst_edges[id_edge]
         temp_targ = dgl.graph((src_tar, dst_tar), num_nodes=num_node)
