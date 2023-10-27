@@ -7,10 +7,10 @@ from functools import partial
 from typing import Dict
 from Utils.console import console, log_table
 from Utils.tracking import tracker_log_table
-from Utils.utils import get_index_by_value
+from Utils.utils import get_index_by_value, get_index_by_list
 from Data.dataset import Facebook, Arxiv
 from Data.utils import node_split, filter_class_by_count, reduce_desity, \
-    graph_split, drop_isolated_node, get_shag_edge_info, percentage_pos, remove_edge, \
+    graph_split, get_shag_edge_info, percentage_pos, remove_edge, \
     check_overlap
 
 def read_data(args, history, exist=False):
@@ -250,30 +250,37 @@ def whitebox_split(graph:dgl.DGLGraph, history:Dict, exist:bool, ratio:float, de
 
     if exist == False:
 
-        tr_node = get_index_by_value(a=graph.ndata['tr_mask'], val=1)
-        te_node = get_index_by_value(a=graph.ndata['te_mask'], val=1)
+        tr_node, _ = get_index_by_value(a=graph.ndata['tr_mask'], val=1).sort()
+        te_node, _ = get_index_by_value(a=graph.ndata['te_mask'], val=1).sort()
         num_te = min(int(te_node.size(dim=0)*0.4), int(tr_node.size(dim=0)*0.4))
 
         perm = torch.randperm(tr_node.size(dim=0))
-        sha_pos_te = tr_node[perm[:num_te]]
-        sha_pos_tr = tr_node[perm[num_te:]]
+        sha_pos_te, _ = tr_node[perm[:num_te]].sort()
+        sha_pos_tr = tr_node[perm[num_te:]].sort()
 
         perm = torch.randperm(te_node.size(dim=0))
-        sha_neg_te = te_node[perm[:num_te]]
-        sha_neg_tr = te_node[perm[num_te:]]
+        sha_neg_te, _ = te_node[perm[:num_te]].sort()
+        sha_neg_tr, _ = te_node[perm[num_te:]].sort()
 
+        # check overlap
+        if debug:
+            num_postr_in_poste = get_index_by_list(arr=sha_pos_tr, test_arr=sha_pos_te).size(dim=0)
+            num_poste_in_postr = get_index_by_list(arr=sha_pos_te, test_arr=sha_pos_tr).size(dim=0)
+            num_negtr_in_negte = get_index_by_list(arr=sha_neg_tr, test_arr=sha_neg_te).size(dim=0)
+            num_negte_in_negtr = get_index_by_list(arr=sha_neg_te, test_arr=sha_neg_tr).size(dim=0)
+            if (num_postr_in_poste == 0) & (num_poste_in_postr == 0):
+                console.log(f"[green] No overlap between train & valid:[\green] :white_check_mark:")
+            else:
+                console.log(f"Node overlap between train & valid: :x:\n{get_index_by_list(arr=sha_pos_tr, test_arr=sha_pos_te).size(dim=0)}\n{get_index_by_list(arr=sha_pos_te, test_arr=sha_pos_tr).size(dim=0)}")
+                
+            if (num_negtr_in_negte == 0) & (num_negte_in_negtr == 0):
+                console.log(f"[green] No overlap between train & test:[\green] :white_check_mark:")
+            else:
+                console.log(f"Node overlap between train & test: :x:\n{get_index_by_list(arr=sha_neg_tr, test_arr=sha_neg_te).size(dim=0)}\n{get_index_by_list(arr=sha_neg_te, test_arr=sha_neg_tr).size(dim=0)}")
+                
+        # set up train and test for shadow graph
         str_mask = torch.zeros(nodes.size(dim=0))
         ste_mask = torch.zeros(nodes.size(dim=0))
-
-        pos_mask_tr = torch.zeros(nodes.size(dim=0))
-        pos_mask_te = torch.zeros(nodes.size(dim=0))
-
-        neg_mask_tr = torch.zeros(nodes.size(dim=0))
-        neg_mask_te = torch.zeros(nodes.size(dim=0))
-        
-        pos_mask = torch.zeros(nodes.size(dim=0))
-        neg_mask = torch.zeros(nodes.size(dim=0))
-        membership_label = torch.zeros(nodes.size(dim=0))
 
         str_mask[sha_pos_tr] = 1
         str_mask[sha_neg_tr] = 1
@@ -281,17 +288,19 @@ def whitebox_split(graph:dgl.DGLGraph, history:Dict, exist:bool, ratio:float, de
         ste_mask[sha_pos_te] = 1
         ste_mask[sha_neg_te] = 1
 
+
+        pos_mask_tr = torch.zeros(nodes.size(dim=0))
+        pos_mask_te = torch.zeros(nodes.size(dim=0))
+
+        neg_mask_tr = torch.zeros(nodes.size(dim=0))
+        neg_mask_te = torch.zeros(nodes.size(dim=0))
+        membership_label = torch.zeros(nodes.size(dim=0))
+
         pos_mask_tr[sha_pos_tr] = 1
         pos_mask_te[sha_pos_te] = 1
 
         neg_mask_tr[sha_neg_tr] = 1
         neg_mask_te[sha_neg_te] = 1
-
-        pos_mask[sha_pos_tr] = 1
-        pos_mask[sha_pos_te] = 1
-
-        neg_mask[sha_neg_tr] = 1
-        neg_mask[sha_neg_te] = 1
 
         membership_label[sha_pos_tr] = 1
         membership_label[sha_pos_te] = 1
@@ -302,8 +311,6 @@ def whitebox_split(graph:dgl.DGLGraph, history:Dict, exist:bool, ratio:float, de
         graph.ndata['str_mask'] = str_mask
         graph.ndata['ste_mask'] = ste_mask
         graph.ndata['sha_label'] = membership_label
-        graph.ndata['pos_mask'] = pos_mask
-        graph.ndata['neg_mask'] = neg_mask
         graph.ndata['pos_mask_tr'] = pos_mask_tr
         graph.ndata['pos_mask_te'] = pos_mask_te
         graph.ndata['neg_mask_tr'] = neg_mask_tr
@@ -312,8 +319,6 @@ def whitebox_split(graph:dgl.DGLGraph, history:Dict, exist:bool, ratio:float, de
         history['sha_tr'] = str_mask.tolist()
         history['sha_te'] = ste_mask.tolist()
         history['sha_label'] = membership_label.tolist()
-        history['pos_mask'] = pos_mask.tolist()
-        history['neg_mask'] = neg_mask.tolist()
         history['pos_mask_tr'] = pos_mask_tr.tolist()
         history['pos_mask_te'] = pos_mask_te.tolist()
         history['neg_mask_tr'] = neg_mask_tr.tolist()
@@ -321,8 +326,6 @@ def whitebox_split(graph:dgl.DGLGraph, history:Dict, exist:bool, ratio:float, de
     else:
         str_mask = torch.LongTensor(history['sha_tr'])
         ste_mask = torch.LongTensor(history['sha_te'])
-        pos_mask = torch.LongTensor(history['pos_mask'])
-        neg_mask = torch.LongTensor(history['neg_mask'])
         pos_mask_tr = torch.LongTensor(history['pos_mask_tr'])
         pos_mask_te = torch.LongTensor(history['pos_mask_te'])
         neg_mask_tr = torch.LongTensor(history['neg_mask_tr'])
@@ -331,18 +334,17 @@ def whitebox_split(graph:dgl.DGLGraph, history:Dict, exist:bool, ratio:float, de
         graph.ndata['str_mask'] = str_mask
         graph.ndata['ste_mask'] = ste_mask
         graph.ndata['sha_label'] = torch.Tensor(history['sha_label'])
-        graph.ndata['pos_mask'] = pos_mask
-        graph.ndata['neg_mask'] = neg_mask
         graph.ndata['pos_mask_tr'] = pos_mask_tr
         graph.ndata['pos_mask_te'] = pos_mask_te
         graph.ndata['neg_mask_tr'] = neg_mask_tr
         graph.ndata['neg_mask_te'] = neg_mask_te
 
     # Eliminating pos-neg and neg-pos in train
-    num_node = graph.nodes().size(dim=0)
+    num_node = nodes.size(dim=0)
     id_pos = graph.ndata['pos_mask_tr']
     id_neg = graph.ndata['neg_mask_tr']
     src_edges, dst_edges = graph.edges()
+    console.log(f"# edges before removing pos-neg in train: {int(src_edges.size(dim=0)/2)}")
 
     src_pos = id_pos[src_edges]
     src_neg = id_neg[src_edges]
@@ -352,18 +354,22 @@ def whitebox_split(graph:dgl.DGLGraph, history:Dict, exist:bool, ratio:float, de
 
     pos_neg = torch.logical_and(src_pos, dst_neg)
     neg_pos = torch.logical_and(src_neg, dst_pos)
-    edg_mask = torch.logical_or(pos_neg, neg_pos)
 
-    eid_tar = get_index_by_value(a=edg_mask, val=0)
+    idx_non_pos_neg, _ = get_index_by_value(a=pos_neg, val=0).sort()
+    idx_non_neg_pos, _ = get_index_by_value(a=pos_neg, val=0).sort()
+
+    eid_tar, _ = torch.cat((idx_non_pos_neg, idx_non_neg_pos), dim=0).sort()
+    console.log(f"# edges left if removing pos-neg in train: {int(eid_tar.size(dim=0)/2)}")
     src_tar = src_edges[eid_tar]
     dst_tar = dst_edges[eid_tar]
+    console.log(f"# edges before removing pos-neg in train: {int(src_tar.size(dim=0)/2)}")
     temp_targ = dgl.graph((src_tar, dst_tar), num_nodes=num_node)
     for key in graph.ndata.keys():
         temp_targ.ndata[key] = graph.ndata[key].clone()
     graph = deepcopy(temp_targ)
 
     if (ratio >= 0.0) and (ratio < 1):
-        console.log(f"Reducing the pos-neg and neg-pos edges with ratio: {ratio}")
+        console.log(f"Reducing the pos-neg and neg-pos edges in test with ratio: {ratio}")
         num_node = graph.nodes().size(dim=0)
         id_pos = graph.ndata['pos_mask_te']
         id_neg = graph.ndata['neg_mask_te']

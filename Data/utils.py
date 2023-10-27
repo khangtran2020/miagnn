@@ -52,6 +52,11 @@ def node_split(args, graph:dgl.DGLGraph, val_size:float, test_size:float):
     te_mask = torch.zeros(graph.nodes().size(dim=0))
     sh_mask = torch.zeros(graph.nodes().size(dim=0))
 
+    id_tr = np.sort(id_tr)
+    id_va = np.sort(id_va)
+    id_te = np.sort(id_te)
+    id_sha = np.sort(id_sha)
+
     tr_mask[id_tr] = 1
     va_mask[id_va] = 1
     te_mask[id_te] = 1
@@ -112,6 +117,7 @@ def get_shag_edge_info(graph:dgl.DGLGraph):
     # get edges in the same set in train 
     pos_mask_tr = graph.ndata['pos_mask_tr']
     neg_mask_tr = graph.ndata['neg_mask_tr']
+
     src_edge_pos_intr = pos_mask_tr[src_edge]
     dst_edge_pos_intr = pos_mask_tr[dst_edge]
     mask_pos_intr = torch.logical_and(src_edge_pos_intr, dst_edge_pos_intr).int()
@@ -199,10 +205,10 @@ def remove_edge(graph:dgl.DGLGraph, mode:str, debug:int=0):
     num_node = graph.nodes().size(dim=0)
     sha_nodes = get_index_by_value(a=graph.ndata['sh_mask'], val=1)
 
-    tr_nodes = get_index_by_value(a=graph.ndata['tr_mask'], val=1)
-    va_nodes = get_index_by_value(a=graph.ndata['va_mask'], val=1)
-    te_nodes = get_index_by_value(a=graph.ndata['te_mask'], val=1)
-    tar_nodes = torch.cat((tr_nodes, va_nodes, te_nodes), dim=0).unique()
+    tr_nodes, _ = get_index_by_value(a=graph.ndata['tr_mask'], val=1).sort()
+    va_nodes, _ = get_index_by_value(a=graph.ndata['va_mask'], val=1).sort()
+    te_nodes, _ = get_index_by_value(a=graph.ndata['te_mask'], val=1).sort()
+    tar_nodes, _ = torch.cat((tr_nodes, va_nodes, te_nodes), dim=0).unique().sort()
     sha_g = graph.subgraph(sha_nodes)
     tar_g = graph.subgraph(tar_nodes)
         
@@ -226,9 +232,9 @@ def remove_edge(graph:dgl.DGLGraph, mode:str, debug:int=0):
         same_inva = torch.logical_and(src_inva, dst_inva)
         same_inte = torch.logical_and(src_inte, dst_inte)
 
-        idx_eintr = get_index_by_value(a=same_intr, val=1)
-        idx_einva = get_index_by_value(a=same_inva, val=1)
-        idx_einte = get_index_by_value(a=same_inte, val=1)
+        idx_eintr, _ = get_index_by_value(a=same_intr, val=1).sort()
+        idx_einva, _ = get_index_by_value(a=same_inva, val=1).sort()
+        idx_einte, _ = get_index_by_value(a=same_inte, val=1).sort()
 
         if debug:
             num_tred_in_vaed = get_index_by_list(arr=idx_eintr, test_arr=idx_einva).size(dim=0)
@@ -254,11 +260,9 @@ def remove_edge(graph:dgl.DGLGraph, mode:str, debug:int=0):
                 console.log(f"Edges overlap between valid & test: :x:\n{get_index_by_list(arr=same_inte, test_arr=same_inva)}\n{get_index_by_list(arr=same_inva, test_arr=same_inte)}")
     
 
-        edge_mask_tar = torch.logical_or(same_intr, same_inva)
-        edge_mask_tar = torch.logical_or(edge_mask_tar, same_inte)
-        eid_tar = get_index_by_value(a=edge_mask_tar, val=1)
-        src_tar = src_edges[eid_tar]
-        dst_tar = dst_edges[eid_tar]
+        id_edge = torch.cat((idx_eintr, idx_einva, idx_einte), dim=0).sort()
+        src_tar = src_edges[id_edge]
+        dst_tar = dst_edges[id_edge]
         temp_targ = dgl.graph((src_tar, dst_tar), num_nodes=num_node)
         for key in tar_g.ndata.keys():
             temp_targ.ndata[key] = tar_g.ndata[key].clone()
