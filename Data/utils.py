@@ -227,29 +227,28 @@ def remove_edge(graph:dgl.DGLGraph, mode:str, debug:int=0):
         same_inte = torch.logical_and(src_inte, dst_inte)
 
         if debug:
-            with console.status(f"Check overlaping of edges in inductive setting") as status:
-                num_tred_in_vaed = get_index_by_list(arr=same_intr, test_arr=same_inva).size(dim=0)
-                num_vaed_in_tred = get_index_by_list(arr=same_inva, test_arr=same_intr).size(dim=0)
-                num_tred_in_teed = get_index_by_list(arr=same_intr, test_arr=same_inte).size(dim=0)
-                num_teed_in_tred = get_index_by_list(arr=same_inte, test_arr=same_intr).size(dim=0)
-                num_teed_in_vaed = get_index_by_list(arr=same_inte, test_arr=same_inva).size(dim=0)
-                num_vaed_in_teed = get_index_by_list(arr=same_inva, test_arr=same_inte).size(dim=0)
+            num_tred_in_vaed = get_index_by_list(arr=same_intr, test_arr=same_inva).size(dim=0)
+            num_vaed_in_tred = get_index_by_list(arr=same_inva, test_arr=same_intr).size(dim=0)
+            num_tred_in_teed = get_index_by_list(arr=same_intr, test_arr=same_inte).size(dim=0)
+            num_teed_in_tred = get_index_by_list(arr=same_inte, test_arr=same_intr).size(dim=0)
+            num_teed_in_vaed = get_index_by_list(arr=same_inte, test_arr=same_inva).size(dim=0)
+            num_vaed_in_teed = get_index_by_list(arr=same_inva, test_arr=same_inte).size(dim=0)
+            
+            if (num_tred_in_vaed == 0) & (num_vaed_in_tred == 0):
+                console.log(f"[green] No overlap between train & valid:[\green] :white_check_mark:")
+            else:
+                console.log(f"Edges overlap between train & valid: :x:\n{get_index_by_list(arr=same_intr, test_arr=same_inva)}\n{get_index_by_list(arr=same_inva, test_arr=same_intr)}")
                 
-                if (num_tred_in_vaed == 0) & (num_vaed_in_tred == 0):
-                    console.log(f"[green] No overlap between train & valid:[\green] :white_check_mark:")
-                else:
-                    console.log(f"Edges overlap between train & valid: :x:\n{get_index_by_list(arr=same_intr, test_arr=same_inva)}\n{get_index_by_list(arr=same_inva, test_arr=same_intr)}")
-                    
-                if (num_tred_in_teed == 0) & (num_teed_in_tred == 0):
-                    console.log(f"[green] No overlap between train & test:[\green] :white_check_mark:")
-                else:
-                    console.log(f"Edges overlap between train & test: :x:\n{get_index_by_list(arr=same_intr, test_arr=same_inte)}\n{get_index_by_list(arr=same_inte, test_arr=same_inva)}")
-                    
-                if (num_teed_in_vaed == 0) & (num_vaed_in_teed == 0):
-                    console.log(f"[green] No overlap between test & valid:[\green] :white_check_mark:")
-                else:
-                    console.log(f"Edges overlap between valid & test: :x:\n{get_index_by_list(arr=same_inte, test_arr=same_inva)}\n{get_index_by_list(arr=same_inva, test_arr=same_inte)}")
-        
+            if (num_tred_in_teed == 0) & (num_teed_in_tred == 0):
+                console.log(f"[green] No overlap between train & test:[\green] :white_check_mark:")
+            else:
+                console.log(f"Edges overlap between train & test: :x:\n{get_index_by_list(arr=same_intr, test_arr=same_inte)}\n{get_index_by_list(arr=same_inte, test_arr=same_inva)}")
+                
+            if (num_teed_in_vaed == 0) & (num_vaed_in_teed == 0):
+                console.log(f"[green] No overlap between test & valid:[\green] :white_check_mark:")
+            else:
+                console.log(f"Edges overlap between valid & test: :x:\n{get_index_by_list(arr=same_inte, test_arr=same_inva)}\n{get_index_by_list(arr=same_inva, test_arr=same_inte)}")
+    
 
         edge_mask_tar = torch.logical_or(same_intr, same_inva)
         edge_mask_tar = torch.logical_or(edge_mask_tar, same_inte)
