@@ -248,6 +248,11 @@ def whitebox_split(graph:dgl.DGLGraph, history:Dict, exist:bool, ratio:float, de
 
     nodes = graph.nodes()
 
+    print(graph.ndata['tr_mask'].sum())
+    print(graph.ndata['va_mask'].sum())
+    print(graph.ndata['te_mask'].sum())
+
+
     if exist == False:
 
         tr_node, _ = get_index_by_value(a=graph.ndata['tr_mask'], val=1).sort()
@@ -359,6 +364,7 @@ def whitebox_split(graph:dgl.DGLGraph, history:Dict, exist:bool, ratio:float, de
 
     console.log(f"pos_neg and neg_pos before removing: {int(pos_neg.size(dim=0))}, {int(neg_pos.size(dim=0))}")
 
+    diff_edge = torch.logical_or(pos_neg, neg_pos)
     idx_non_pos_neg, _ = get_index_by_value(a=pos_neg, val=0).sort()
     idx_non_neg_pos, _ = get_index_by_value(a=pos_neg, val=0).sort()
 
