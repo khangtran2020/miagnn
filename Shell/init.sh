@@ -15,6 +15,6 @@ pip install numpy scipy rich tqdm matplotlib
 pip install torchmetrics
 pip install networkx
 pip install ogb
-pip install \
-    --extra-index-url=https://pypi.nvidia.com \
-    cudf-cu11 dask-cudf-cu11 cuml-cu11 cugraph-cu11 cuspatial-cu11 cuproj-cu11 cuxfilter-cu11 cucim
+# pip install \
+#     --extra-index-url=https://pypi.nvidia.com \
+#     cudf-cu11 dask-cudf-cu11 cuml-cu11 cugraph-cu11 cuspatial-cu11 cuproj-cu11 cuxfilter-cu11 cucim
