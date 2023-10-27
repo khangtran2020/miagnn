@@ -226,13 +226,17 @@ def remove_edge(graph:dgl.DGLGraph, mode:str, debug:int=0):
         same_inva = torch.logical_and(src_inva, dst_inva)
         same_inte = torch.logical_and(src_inte, dst_inte)
 
+        idx_eintr = get_index_by_value(a=same_intr, val=1)
+        idx_einva = get_index_by_value(a=same_inva, val=1)
+        idx_einte = get_index_by_value(a=same_inte, val=1)
+
         if debug:
-            num_tred_in_vaed = get_index_by_list(arr=same_intr, test_arr=same_inva).size(dim=0)
-            num_vaed_in_tred = get_index_by_list(arr=same_inva, test_arr=same_intr).size(dim=0)
-            num_tred_in_teed = get_index_by_list(arr=same_intr, test_arr=same_inte).size(dim=0)
-            num_teed_in_tred = get_index_by_list(arr=same_inte, test_arr=same_intr).size(dim=0)
-            num_teed_in_vaed = get_index_by_list(arr=same_inte, test_arr=same_inva).size(dim=0)
-            num_vaed_in_teed = get_index_by_list(arr=same_inva, test_arr=same_inte).size(dim=0)
+            num_tred_in_vaed = get_index_by_list(arr=idx_eintr, test_arr=idx_einva).size(dim=0)
+            num_vaed_in_tred = get_index_by_list(arr=idx_einva, test_arr=idx_eintr).size(dim=0)
+            num_tred_in_teed = get_index_by_list(arr=idx_eintr, test_arr=idx_einte).size(dim=0)
+            num_teed_in_tred = get_index_by_list(arr=idx_einte, test_arr=idx_eintr).size(dim=0)
+            num_teed_in_vaed = get_index_by_list(arr=idx_einte, test_arr=idx_einva).size(dim=0)
+            num_vaed_in_teed = get_index_by_list(arr=idx_einva, test_arr=idx_einte).size(dim=0)
             
             if (num_tred_in_vaed == 0) & (num_vaed_in_tred == 0):
                 console.log(f"[green] No overlap between train & valid:[\green] :white_check_mark:")
