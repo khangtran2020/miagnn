@@ -118,50 +118,23 @@ def get_shag_edge_info(graph:dgl.DGLGraph):
     pos_mask = graph.ndata['tr_mask']
     neg_mask = graph.ndata['te_mask']
 
-    src_edge_pos_intr = pos_mask_tr[src_edge]
-    dst_edge_pos_intr = pos_mask_tr[dst_edge]
-    mask_pos_intr = torch.logical_and(src_edge_pos_intr, dst_edge_pos_intr).int()
-    indx_pos_intr = get_index_by_value(a=mask_pos_intr, val=1)
-    src_edge_neg_intr = neg_mask_tr[src_edge]
-    dst_edge_neg_intr = neg_mask_tr[dst_edge]
-    mask_neg_intr = torch.logical_and(src_edge_neg_intr, dst_edge_neg_intr).int()
-    indx_neg_intr = get_index_by_value(a=mask_neg_intr, val=1)
-    indx_same_intr = torch.cat((indx_pos_intr, indx_neg_intr), dim=0)
+    src_edge_pos = pos_mask[src_edge]
+    dst_edge_pos = pos_mask[dst_edge]
 
-    # get edges in diff set in train
-    mask_pos_neg_intr = torch.logical_and(src_edge_pos_intr, dst_edge_neg_intr).int()
-    indx_pos_neg_intr = get_index_by_value(a=mask_pos_neg_intr, val=1)
-    mask_neg_pos_intr = torch.logical_and(src_edge_neg_intr, dst_edge_pos_intr).int()
-    indx_neg_pos_intr = get_index_by_value(a=mask_neg_pos_intr, val=1)
-    indx_diff_intr = torch.cat((indx_pos_neg_intr, indx_neg_pos_intr), dim=0)
-    
-    # get edges in the same set in test 
-    pos_mask_te = graph.ndata['pos_mask_te']
-    neg_mask_te = graph.ndata['neg_mask_te']
-    src_edge_pos_inte = pos_mask_te[src_edge]
-    dst_edge_pos_inte = pos_mask_te[dst_edge]
-    mask_pos_inte = torch.logical_and(src_edge_pos_inte, dst_edge_pos_inte).int()
-    indx_pos_inte = get_index_by_value(a=mask_pos_inte, val=1)
-    src_edge_neg_inte = neg_mask_te[src_edge]
-    dst_edge_neg_inte = neg_mask_te[dst_edge]
-    mask_neg_inte = torch.logical_and(src_edge_neg_inte, dst_edge_neg_inte).int()
-    indx_neg_inte = get_index_by_value(a=mask_neg_inte, val=1)
-    indx_same_inte = torch.cat((indx_pos_inte, indx_neg_inte), dim=0)
+    src_edge_neg = neg_mask[src_edge]
+    dst_edge_neg = neg_mask[dst_edge]
 
-    # get edges in diff set in test
-    mask_pos_neg_inte = torch.logical_and(src_edge_pos_inte, dst_edge_neg_inte).int()
-    indx_pos_neg_inte = get_index_by_value(a=mask_pos_neg_inte, val=1)
-    mask_neg_pos_inte = torch.logical_and(src_edge_neg_inte, dst_edge_pos_inte).int()
-    indx_neg_pos_inte = get_index_by_value(a=mask_neg_pos_inte, val=1)
-    indx_diff_inte = torch.cat((indx_pos_neg_inte, indx_neg_pos_inte), dim=0)
+    pos_pos = torch.logical_and(src_edge_pos, dst_edge_pos).int()
+    pos_neg = torch.logical_and(src_edge_pos, dst_edge_neg).int()
+    neg_pos = torch.logical_and(src_edge_neg, dst_edge_pos).int()
+    neg_neg = torch.logical_and(src_edge_neg, dst_edge_neg).int()
+    indx_pos_pos = get_index_by_value(a=pos_pos, val=1)
+    indx_pos_neg = get_index_by_value(a=pos_neg, val=1)
+    indx_neg_pos = get_index_by_value(a=neg_pos, val=1)
+    indx_neg_neg = get_index_by_value(a=neg_neg, val=1)
 
-    indx_same = torch.cat((indx_same_intr, indx_same_inte), dim=0)
-    indx_diff = torch.cat((indx_diff_intr, indx_diff_inte), dim=0)
-
-    indx_pos_pos = torch.cat((indx_pos_intr, indx_pos_inte), dim=0)
-    indx_pos_neg = torch.cat((indx_pos_neg_intr, indx_pos_neg_inte), dim=0)
-    indx_neg_neg = torch.cat((indx_neg_intr, indx_neg_inte), dim=0)
-    indx_neg_pos = torch.cat((indx_neg_pos_intr, indx_neg_pos_inte), dim=0)
+    indx_same = torch.cat((indx_pos_pos, indx_neg_neg), dim=0)
+    indx_diff = torch.cat((indx_pos_neg, indx_neg_pos), dim=0)
 
     info['# edge pos-pos'] = f'{int(indx_pos_pos.size(dim=0)/2)}'
     info['# edge neg-neg'] = f'{int(indx_neg_neg.size(dim=0)/2)}'

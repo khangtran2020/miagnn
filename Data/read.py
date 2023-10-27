@@ -346,7 +346,6 @@ def whitebox_split(graph:dgl.DGLGraph, history:Dict, exist:bool, ratio:float, de
     pos_mask_tr = graph.ndata['pos_mask_tr']
     neg_mask_tr = graph.ndata['neg_mask_tr']
     src_edges, dst_edges = graph.edges()
-    console.log(f"# edges before removing pos-neg in train: {int(src_edges.size(dim=0))}")
 
     src_pos = pos_mask_tr[src_edges]
     src_neg = neg_mask_tr[src_edges]
@@ -354,18 +353,15 @@ def whitebox_split(graph:dgl.DGLGraph, history:Dict, exist:bool, ratio:float, de
     dst_pos = pos_mask_tr[dst_edges]
     dst_neg = neg_mask_tr[dst_edges]
 
-    console.log(f"Src/Dst before removing: {int(src_pos.size(dim=0))}, {int(dst_pos.size(dim=0))}, {int(src_neg.size(dim=0))}, {int(dst_neg.size(dim=0))}")
 
     pos_neg = torch.logical_and(src_pos, dst_neg).int()
     neg_pos = torch.logical_and(src_neg, dst_pos).int()
 
-    console.log(f"pos_neg and neg_pos before removing: {int(pos_neg.size(dim=0))}, {int(neg_pos.size(dim=0))}")
     diff_edge = pos_neg + neg_pos
+    print(diff_edge.unique(return_counts=True))
     eid_tar, _ = get_index_by_value(a=diff_edge, val=0)
-    console.log(f"# edges left if removing pos-neg in train: {int(eid_tar.size(dim=0))}")
     src_tar = src_edges[eid_tar]
     dst_tar = dst_edges[eid_tar]
-    console.log(f"# edges before removing pos-neg in train: {int(src_tar.size(dim=0))}")
     temp_targ = dgl.graph((src_tar, dst_tar), num_nodes=num_node)
     for key in graph.ndata.keys():
         temp_targ.ndata[key] = graph.ndata[key].clone()
