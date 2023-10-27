@@ -359,7 +359,7 @@ def whitebox_split(graph:dgl.DGLGraph, history:Dict, exist:bool, ratio:float, de
 
     diff_edge = pos_neg + neg_pos
     print(diff_edge.unique(return_counts=True))
-    eid_tar, _ = get_index_by_value(a=diff_edge, val=0)
+    eid_tar, _ = get_index_by_value(a=diff_edge, val=0).sort()
     src_tar = src_edges[eid_tar]
     dst_tar = dst_edges[eid_tar]
     temp_targ = dgl.graph((src_tar, dst_tar), num_nodes=num_node)
