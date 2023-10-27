@@ -266,43 +266,42 @@ def check_overlap(graph:dgl.DGLGraph, mode:str):
 
     num_node = graph.nodes().size(dim=0)
     if mode == 'target':
-        with console.status(f"Check overlaping of {mode} graph") as status:
-            tr_nodes = get_index_by_value(a=graph.ndata['tr_mask'], val=1)
-            va_nodes = get_index_by_value(a=graph.ndata['va_mask'], val=1)
-            te_nodes = get_index_by_value(a=graph.ndata['te_mask'], val=1)
+        tr_nodes = get_index_by_value(a=graph.ndata['tr_mask'], val=1)
+        va_nodes = get_index_by_value(a=graph.ndata['va_mask'], val=1)
+        te_nodes = get_index_by_value(a=graph.ndata['te_mask'], val=1)
 
-            num_vanode_in_trnode = get_index_by_list(arr=va_nodes, test_arr=tr_nodes).size(dim=0)
-            num_trnode_in_vanode = get_index_by_list(arr=tr_nodes, test_arr=va_nodes).size(dim=0)
-            num_tenode_in_trnode = get_index_by_list(arr=te_nodes, test_arr=tr_nodes).size(dim=0)
-            num_trnode_in_tenode = get_index_by_list(arr=tr_nodes, test_arr=te_nodes).size(dim=0)
-            num_vanode_in_tenode = get_index_by_list(arr=va_nodes, test_arr=te_nodes).size(dim=0)
-            num_tenode_in_vanode = get_index_by_list(arr=te_nodes, test_arr=va_nodes).size(dim=0)
+        num_vanode_in_trnode = get_index_by_list(arr=va_nodes, test_arr=tr_nodes).size(dim=0)
+        num_trnode_in_vanode = get_index_by_list(arr=tr_nodes, test_arr=va_nodes).size(dim=0)
+        num_tenode_in_trnode = get_index_by_list(arr=te_nodes, test_arr=tr_nodes).size(dim=0)
+        num_trnode_in_tenode = get_index_by_list(arr=tr_nodes, test_arr=te_nodes).size(dim=0)
+        num_vanode_in_tenode = get_index_by_list(arr=va_nodes, test_arr=te_nodes).size(dim=0)
+        num_tenode_in_vanode = get_index_by_list(arr=te_nodes, test_arr=va_nodes).size(dim=0)
 
-            if (num_vanode_in_trnode == 0) & (num_trnode_in_vanode == 0):
-                console.log(f"[green] No overlap between train & valid:[\green] :white_check_mark:")
-            else:
-                console.log(f"Node overlap between train & valid: :x:\n{get_index_by_list(arr=va_nodes, test_arr=tr_nodes)}\n{get_index_by_list(arr=tr_nodes, test_arr=va_nodes)}")
-                
-            if (num_tenode_in_trnode == 0) & (num_trnode_in_tenode == 0):
-                console.log(f"[green] No overlap between train & test:[\green] :white_check_mark:")
-            else:
-                console.log(f"Node overlap between train & test: :x:\n{get_index_by_list(arr=te_nodes, test_arr=tr_nodes)}\n{get_index_by_list(arr=tr_nodes, test_arr=te_nodes)}")
-                
-            if (num_vanode_in_tenode == 0) & (num_tenode_in_vanode == 0):
-                console.log(f"[green] No overlap between test & valid:[\green] :white_check_mark:")
-            else:
-                console.log(f"Node overlap between valid & test: :x:\n{get_index_by_list(arr=va_nodes, test_arr=te_nodes)}\n{get_index_by_list(arr=te_nodes, test_arr=te_nodes)}")
+        if (num_vanode_in_trnode == 0) & (num_trnode_in_vanode == 0):
+            console.log(f"[green] No overlap between train & valid:[\green] :white_check_mark:")
+        else:
+            console.log(f"Node overlap between train & valid: :x:\n{get_index_by_list(arr=va_nodes, test_arr=tr_nodes)}\n{get_index_by_list(arr=tr_nodes, test_arr=va_nodes)}")
+            
+        if (num_tenode_in_trnode == 0) & (num_trnode_in_tenode == 0):
+            console.log(f"[green] No overlap between train & test:[\green] :white_check_mark:")
+        else:
+            console.log(f"Node overlap between train & test: :x:\n{get_index_by_list(arr=te_nodes, test_arr=tr_nodes)}\n{get_index_by_list(arr=tr_nodes, test_arr=te_nodes)}")
+            
+        if (num_vanode_in_tenode == 0) & (num_tenode_in_vanode == 0):
+            console.log(f"[green] No overlap between test & valid:[\green] :white_check_mark:")
+        else:
+            console.log(f"Node overlap between valid & test: :x:\n{get_index_by_list(arr=va_nodes, test_arr=te_nodes)}\n{get_index_by_list(arr=te_nodes, test_arr=te_nodes)}")
     else:
-        with console.status(f"Check overlaping of {mode} graph") as status: 
-            tr_nodes = get_index_by_value(a=graph.ndata['str_mask'], val=1)
-            te_nodes = get_index_by_value(a=graph.ndata['ste_mask'], val=1)
+        
+        tr_nodes = get_index_by_value(a=graph.ndata['str_mask'], val=1)
+        te_nodes = get_index_by_value(a=graph.ndata['ste_mask'], val=1)
 
-            num_tenode_in_trnode = get_index_by_list(arr=te_nodes, test_arr=tr_nodes).size(dim=0)
-            num_trnode_in_tenode = get_index_by_list(arr=tr_nodes, test_arr=te_nodes).size(dim=0)             
-            if (num_tenode_in_trnode == 0) & (num_trnode_in_tenode == 0):
-                console.log(f"[green] No overlap between train & test:[\green] :white_check_mark:")
-            else:
-                console.log(f"Node overlap between train & test: :x:\n{get_index_by_list(arr=te_nodes, test_arr=tr_nodes)}\n{get_index_by_list(arr=tr_nodes, test_arr=te_nodes)}")
+        num_tenode_in_trnode = get_index_by_list(arr=te_nodes, test_arr=tr_nodes).size(dim=0)
+        num_trnode_in_tenode = get_index_by_list(arr=tr_nodes, test_arr=te_nodes).size(dim=0)             
+        if (num_tenode_in_trnode == 0) & (num_trnode_in_tenode == 0):
+            console.log(f"[green] No overlap between train & test:[\green] :white_check_mark:")
+        else:
+            console.log(f"Node overlap between train & test: :x:\n{get_index_by_list(arr=te_nodes, test_arr=tr_nodes)}\n{get_index_by_list(arr=tr_nodes, test_arr=te_nodes)}")
 
 def shadow_visualization(graph:dgl.DGLGraph, mask:str):
     pass
