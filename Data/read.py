@@ -352,6 +352,8 @@ def whitebox_split(graph:dgl.DGLGraph, history:Dict, exist:bool, ratio:float, de
     dst_pos = id_pos[dst_edges]
     dst_neg = id_neg[dst_edges]
 
+    console.log(f"Src/Dst before removing: {int(src_pos.size(dim=0)/2)}, {int(dst_pos.size(dim=0)/2)}, {int(src_neg.size(dim=0)/2)}, {int(dst_neg.size(dim=0)/2)}")
+
     pos_neg = torch.logical_and(src_pos, dst_neg)
     neg_pos = torch.logical_and(src_neg, dst_pos)
 

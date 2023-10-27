@@ -115,8 +115,8 @@ def get_shag_edge_info(graph:dgl.DGLGraph):
     src_edge, dst_edge = graph.edges()
 
     # get edges in the same set in train 
-    pos_mask_tr = graph.ndata['pos_mask_tr']
-    neg_mask_tr = graph.ndata['neg_mask_tr']
+    pos_mask = graph.ndata['tr_mask']
+    neg_mask = graph.ndata['te_mask']
 
     src_edge_pos_intr = pos_mask_tr[src_edge]
     dst_edge_pos_intr = pos_mask_tr[dst_edge]
