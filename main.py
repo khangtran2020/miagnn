@@ -7,7 +7,7 @@ from config import parse_args
 from Attacks.blackbox.blackbox import attack as bb_attack
 from Attacks.whitebox.whitebox import attack as wb_attack
 from Data.read import read_data, whitebox_split, blackbox_split
-from Data.utils import init_loader, check_overlap
+from Data.utils import init_loader, check_overlap, shadow_visualization
 from Models.process import train, evaluate
 from Models.utils import init_model
 from Utils.utils import seed_everything, read_pickel, print_args, init_history, get_name, save_dict
@@ -42,7 +42,9 @@ def run(args, current_time, device):
             sha_g = blackbox_split(graph=sha_g, history=data_hist, exist=exist_data, mode=args.att_submode)
         elif args.att_mode == 'whitebox':
             sha_g = whitebox_split(graph=sha_g, history=data_hist, exist=exist_data, ratio=args.diff_rat, debug=args.debug)
-        if args.debug == 1: check_overlap(graph=sha_g, mode='shadow')
+        if args.debug == 1: 
+            check_overlap(graph=sha_g, mode='shadow')
+            shadow_visualization(graph=sha_g, path=args.res_path + f"{name['data']}-shapos.pkl")
         console.log(f"Done Initializing Shadow Data: :white_check_mark:")
 
     with console.status("Initializing Target Model") as status:

@@ -1,10 +1,16 @@
+import os
 import dgl
 import torch
+import wandb
 import numpy as np
 import networkx as nx
+import matplotlib.pyplot as plt
 from copy import deepcopy
+from typing import Dict
+from PIL import Image
 from sklearn.model_selection import train_test_split
-from Utils.utils import get_index_by_value, get_index_by_list
+from networkx.drawing.nx_agraph import graphviz_layout
+from Utils.utils import get_index_by_value, get_index_by_list, read_pickel, save_dict
 from Utils.console import console
 
 def drop_isolated_node(graph:dgl.DGLGraph):
@@ -283,5 +289,63 @@ def check_overlap(graph:dgl.DGLGraph, mode:str):
         else:
             console.log(f"Node overlap between train & test: :x:\n{get_index_by_list(arr=te_nodes, test_arr=tr_nodes)}\n{get_index_by_list(arr=tr_nodes, test_arr=te_nodes)}")
 
-def shadow_visualization(graph:dgl.DGLGraph, mask:str):
-    pass
+def shadow_visualization(graph:dgl.DGLGraph, path:str):
+
+    pos_mask_tr = graph.ndata['pos_mask_tr']
+    neg_mask_tr = graph.ndata['neg_mask_tr']
+
+    pos_mask_te = graph.ndata['pos_mask_te']
+    neg_mask_te = graph.ndata['neg_mask_te']
+
+
+    id_postr = (pos_mask_tr == 1).nonzero(as_tuple=True)[0].tolist()
+    id_negtr = (neg_mask_tr == 1).nonzero(as_tuple=True)[0].tolist()
+
+    id_poste = (pos_mask_te == 1).nonzero(as_tuple=True)[0].tolist()
+    id_negte = (neg_mask_te == 1).nonzero(as_tuple=True)[0].tolist()
+
+    src_edges, dst_edges = graph.edges()
+    src_pos_intr = id_postr[src_edges]
+    dst_pos_intr = id_postr[dst_edges]
+    pos_intr = torch.logical_and(src_pos_intr, dst_pos_intr).int()
+    id_epostr, _ = get_index_by_value(a=pos_intr, val=1).sort()
+
+    src_neg_intr = id_negtr[src_edges]
+    dst_neg_intr = id_negtr[dst_edges]
+    neg_intr = torch.logical_and(src_neg_intr, dst_neg_intr).int()
+    id_enegtr, _ = get_index_by_value(a=neg_intr, val=1).sort()
+
+    id_etr, _ = torch.cat((id_epostr, id_enegtr), dim=0).sort()
+    
+    src_etr = src_edges[id_etr].tolist()
+    dst_etr = dst_edges[id_etr].tolist()
+    etr_ls = list(zip(src_etr, dst_etr))
+
+
+
+    G = graph.to_networkx()
+    if os.path.exists(path=path):
+        pos = read_pickel(path)
+    else:
+        pos = graphviz_layout(G)
+        save_dict(path=path, dct=pos)
+
+    plt.figure(num=None, figsize=(15, 15))
+    plt.axis('off')
+
+    nx.draw_networkx_nodes(G,pos,nodelist=id_postr, alpha=0.7, node_color='tab:blue', node_shape='o')
+    nx.draw_networkx_nodes(G,pos,nodelist=id_negtr, alpha=0.7, node_color='tab:blue', node_shape='o')
+    nx.draw_networkx_nodes(G,pos,nodelist=id_poste, alpha=0.7, node_color='tab:orange', node_shape='s')
+    nx.draw_networkx_nodes(G,pos,nodelist=id_negte, alpha=0.7, node_color='tab:orange', node_shape='s')
+    nx.draw_networkx_edges(G,pos,arrows=True)
+    # nx.draw_networkx_labels(G,pos)
+    plt.savefig("results/dict/shadow_graph.jpg", bbox_inches='tight')
+
+    img = Image.open("results/dict/shadow_graph.jpg")
+    img_arr = np.array(img)
+    images = wandb.Image(
+        img_arr, 
+        caption="Initialize shadow graph"
+        )
+            
+    wandb.log({"Shadow graph": images})
