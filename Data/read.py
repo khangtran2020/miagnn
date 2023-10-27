@@ -256,7 +256,7 @@ def whitebox_split(graph:dgl.DGLGraph, history:Dict, exist:bool, ratio:float, de
 
         perm = torch.randperm(tr_node.size(dim=0))
         sha_pos_te, _ = tr_node[perm[:num_te]].sort()
-        sha_pos_tr = tr_node[perm[num_te:]].sort()
+        sha_pos_tr, _ = tr_node[perm[num_te:]].sort()
 
         perm = torch.randperm(te_node.size(dim=0))
         sha_neg_te, _ = te_node[perm[:num_te]].sort()
