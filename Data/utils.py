@@ -153,8 +153,8 @@ def percentage_pos(node:torch.Tensor, graph:dgl.DGLGraph):
     mask[dst.unique().long()] = 1
     index = get_index_by_value(a=mask, val=1)
     nodes_id = frontier.nodes()[index]
-    num_pos = graph.ndata['pos_mask'][nodes_id.long()].sum()
-    num_neg = graph.ndata['neg_mask'][nodes_id.long()].sum()
+    num_pos = graph.ndata['tr_mask'][nodes_id.long()].sum()
+    num_neg = graph.ndata['te_mask'][nodes_id.long()].sum()
     pos_percentage = num_pos.item() / (num_pos.item() + num_neg.item() + 1e-12)
     return pos_percentage
 
