@@ -344,7 +344,7 @@ def whitebox_split(graph:dgl.DGLGraph, history:Dict, exist:bool, ratio:float, de
     id_pos = graph.ndata['pos_mask_tr']
     id_neg = graph.ndata['neg_mask_tr']
     src_edges, dst_edges = graph.edges()
-    console.log(f"# edges before removing pos-neg in train: {int(src_edges.size(dim=0)/2)}")
+    console.log(f"# edges before removing pos-neg in train: {int(src_edges.size(dim=0))}")
 
     src_pos = id_pos[src_edges]
     src_neg = id_neg[src_edges]
@@ -352,10 +352,12 @@ def whitebox_split(graph:dgl.DGLGraph, history:Dict, exist:bool, ratio:float, de
     dst_pos = id_pos[dst_edges]
     dst_neg = id_neg[dst_edges]
 
-    console.log(f"Src/Dst before removing: {int(src_pos.size(dim=0)/2)}, {int(dst_pos.size(dim=0)/2)}, {int(src_neg.size(dim=0)/2)}, {int(dst_neg.size(dim=0)/2)}")
+    console.log(f"Src/Dst before removing: {int(src_pos.size(dim=0))}, {int(dst_pos.size(dim=0))}, {int(src_neg.size(dim=0))}, {int(dst_neg.size(dim=0))}")
 
     pos_neg = torch.logical_and(src_pos, dst_neg)
     neg_pos = torch.logical_and(src_neg, dst_pos)
+
+    console.log(f"pos_neg and neg_pos before removing: {int(pos_neg.size(dim=0))}, {int(neg_pos.size(dim=0))}")
 
     idx_non_pos_neg, _ = get_index_by_value(a=pos_neg, val=0).sort()
     idx_non_neg_pos, _ = get_index_by_value(a=pos_neg, val=0).sort()
