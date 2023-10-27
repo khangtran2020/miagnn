@@ -304,23 +304,6 @@ def shadow_visualization(graph:dgl.DGLGraph, path:str):
     id_poste = (pos_mask_te == 1).nonzero(as_tuple=True)[0].tolist()
     id_negte = (neg_mask_te == 1).nonzero(as_tuple=True)[0].tolist()
 
-    src_edges, dst_edges = graph.edges()
-    src_pos_intr = id_postr[src_edges]
-    dst_pos_intr = id_postr[dst_edges]
-    pos_intr = torch.logical_and(src_pos_intr, dst_pos_intr).int()
-    id_epostr, _ = get_index_by_value(a=pos_intr, val=1).sort()
-
-    src_neg_intr = id_negtr[src_edges]
-    dst_neg_intr = id_negtr[dst_edges]
-    neg_intr = torch.logical_and(src_neg_intr, dst_neg_intr).int()
-    id_enegtr, _ = get_index_by_value(a=neg_intr, val=1).sort()
-
-    id_etr, _ = torch.cat((id_epostr, id_enegtr), dim=0).sort()
-    
-    src_etr = src_edges[id_etr].tolist()
-    dst_etr = dst_edges[id_etr].tolist()
-    etr_ls = list(zip(src_etr, dst_etr))
-
 
 
     G = graph.to_networkx()
