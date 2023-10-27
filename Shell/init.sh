@@ -10,6 +10,7 @@ pip install  dgl -f https://data.dgl.ai/wheels/cu118/repo.html
 pip install  dglgo -f https://data.dgl.ai/wheels-test/repo.html
 
 pip install torch_geometric
+pip install pygraphviz
 pip install numpy scipy rich tqdm matplotlib
 pip install torchmetrics
 pip install networkx
