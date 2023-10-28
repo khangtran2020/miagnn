@@ -373,9 +373,9 @@ def whitebox_split(graph:dgl.DGLGraph, history:Dict, exist:bool, ratio:float, de
         id_pos = graph.ndata['pos_mask_te']
         id_neg = graph.ndata['neg_mask_te']
         src_edges, dst_edges = graph.edges()
-        index = (src_edge < dst_edge).nonzero(as_tuple=True)[0]
-        src_edge = src_edge[index]
-        dst_edge = dst_edge[index]
+        index = (src_edges < dst_edges).nonzero(as_tuple=True)[0]
+        src_edges = src_edges[index]
+        src_edges = src_edges[index]
 
         src_pos = id_pos[src_edges]
         src_neg= id_neg[src_edges]
