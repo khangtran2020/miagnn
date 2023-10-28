@@ -1,12 +1,14 @@
+import dgl
 import torch
 import torchmetrics
 from rich.progress import Progress
 from typing import Dict
-from Models.utils import EarlyStopping
+from Models.utils import EarlyStopping, draw_conf, draw_grad
 from Utils.console import console
 from Utils.tracking import tracker_log, wandb
 
-def train(args, tr_loader:torch.utils.data.DataLoader, va_loader:torch.utils.data.DataLoader, model:torch.nn.Module, device:torch.device, history:Dict, name=str):
+def train(args, tr_loader:torch.utils.data.DataLoader, va_loader:torch.utils.data.DataLoader, sha_g:dgl.DGLGraph,
+          model:torch.nn.Module, device:torch.device, history:Dict, name:str, name_pos:str=None):
     
     model_name = '{}.pt'.format(name)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
@@ -35,6 +37,10 @@ def train(args, tr_loader:torch.utils.data.DataLoader, va_loader:torch.utils.dat
         task3 = progress.add_task("[cyan]Evaluating...", total=len(va_loader))
 
         # progress.reset(task_id=task1)
+        if args.debug == 1:
+            image_conf = []
+            image_grad = []
+
         for epoch in range(args.epochs):
             tr_loss = 0
             ntr = 0
@@ -80,6 +86,13 @@ def train(args, tr_loader:torch.utils.data.DataLoader, va_loader:torch.utils.dat
                     # progress.console.print("[yellow]va_loss[/yellow]: {0:.3f}, [yellow]va_acc[/yellow]: {0:.3f}".format(loss.item()/preds.size(dim=0), metrics.computes().item())) 
                     progress.advance(task3)
 
+            if (args.debug == 1) and (epoch % 20 == 0):
+                img_conf = draw_conf(graph=sha_g, model=model, path=args.res_path + f"{name_pos}-shapos.pkl", device=device)
+                img_grad = draw_grad(graph=sha_g, model=model, path=args.res_path + f"{name_pos}-shapos.pkl", device=device)
+
+                image_conf.append(img_conf)
+                image_grad.append(img_grad)
+
             va_loss = va_loss / nva 
             va_perf = metrics.compute().item()
             metrics.reset()   
@@ -99,6 +112,11 @@ def train(args, tr_loader:torch.utils.data.DataLoader, va_loader:torch.utils.dat
             tracker_log(dct = results)
             progress.console.print(f"Epoch {epoch}: [yellow]loss[/yellow]: {tr_loss}, [yellow]acc[/yellow]: {tr_perf}, [yellow]va_loss[/yellow]: {va_loss}, [yellow]va_acc[/yellow]: {va_perf}") 
             progress.advance(task1)
+
+        if args.debug == 1:
+            log_images(images=image_conf, mode='Confidence')
+            log_images(images=image_grad, mode="Grad norm")
+
         console.log(f"Done Training target model: :white_check_mark:")
     model.load_state_dict(torch.load(args.model_path + model_name))
     return model, history
@@ -143,3 +161,9 @@ def evaluate(args, te_loader:torch.utils.data.DataLoader, model:torch.nn.Module,
             history['best_test_loss'] = te_loss
             history['best_test_perf'] = te_perf
             metrics.reset()
+
+def log_images(images:list, mode:str):
+    columns=[f'{mode}_at_epoch_{i}' for i in range(len(images))]
+    data = [[wandb.Image(img) for img in images]]
+    test_table = wandb.Table(data=data, columns=columns)
+    wandb.log({f"{mode} of shadow graph" : test_table})
