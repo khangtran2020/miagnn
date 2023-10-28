@@ -99,8 +99,8 @@ def draw_conf(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
 
     nx.draw_networkx_nodes(G,pos,nodelist=id_postr, alpha=conf[id_postr], node_color='tab:blue', node_shape='o')
     nx.draw_networkx_nodes(G,pos,nodelist=id_negtr, alpha=conf[id_postr], node_color='tab:blue', node_shape='s')
-    nx.draw_networkx_nodes(G,pos,nodelist=id_poste, alpha=conf[id_postr], node_color='tab:blue', node_shape='o')
-    nx.draw_networkx_nodes(G,pos,nodelist=id_negte, alpha=conf[id_postr], node_color='tab:blue', node_shape='s')
+    nx.draw_networkx_nodes(G,pos,nodelist=id_poste, alpha=conf[id_postr], node_color='tab:orange', node_shape='o')
+    nx.draw_networkx_nodes(G,pos,nodelist=id_negte, alpha=conf[id_postr], node_color='tab:orange', node_shape='s')
     nx.draw_networkx_edges(G,pos,arrows=True)
     # nx.draw_networkx_labels(G,pos)
     plt.savefig("results/dict/shadow_graph_conf.jpg", bbox_inches='tight')
