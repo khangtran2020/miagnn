@@ -317,9 +317,9 @@ def shadow_visualization(graph:dgl.DGLGraph, path:str):
     plt.axis('off')
 
     nx.draw_networkx_nodes(G,pos,nodelist=id_postr, alpha=0.7, node_color='tab:blue', node_shape='o')
-    nx.draw_networkx_nodes(G,pos,nodelist=id_negtr, alpha=0.7, node_color='tab:orange', node_shape='o')
-    nx.draw_networkx_nodes(G,pos,nodelist=id_poste, alpha=0.7, node_color='tab:green', node_shape='s')
-    nx.draw_networkx_nodes(G,pos,nodelist=id_negte, alpha=0.7, node_color='tab:pink', node_shape='s')
+    nx.draw_networkx_nodes(G,pos,nodelist=id_negtr, alpha=0.7, node_color='tab:orange', node_shape='s')
+    nx.draw_networkx_nodes(G,pos,nodelist=id_poste, alpha=0.2, node_color='tab:blue', node_shape='o')
+    nx.draw_networkx_nodes(G,pos,nodelist=id_negte, alpha=0.2, node_color='tab:orange', node_shape='s')
     nx.draw_networkx_edges(G,pos,arrows=True)
     # nx.draw_networkx_labels(G,pos)
     plt.savefig("results/dict/shadow_graph.jpg", bbox_inches='tight')
