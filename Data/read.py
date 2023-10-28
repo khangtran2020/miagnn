@@ -370,8 +370,8 @@ def whitebox_split(graph:dgl.DGLGraph, history:Dict, exist:bool, ratio:float, de
     if (ratio >= 0.0) and (ratio < 1):
         console.log(f"Reducing the pos-neg and neg-pos edges in test with ratio: {ratio}")
         num_node = graph.nodes().size(dim=0)
-        id_pos = graph.ndata['pos_mask_te']
-        id_neg = graph.ndata['neg_mask_te']
+        id_pos = graph.ndata['tr_mask']
+        id_neg = graph.ndata['te_mask']
         src_edges, dst_edges = graph.edges()
         index = (src_edges < dst_edges).nonzero(as_tuple=True)[0]
         src_edges = src_edges[index]
