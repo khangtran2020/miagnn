@@ -114,7 +114,7 @@ def draw_grad(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
     model.to(device)
     criter = torch.nn.CrossEntropyLoss(reduction='none')
     preds = model.full(g=graph.to(device), x=graph.ndata['feat'].to(device))
-    target = graph.ndata['labe'].to(device)
+    target = graph.ndata['label'].to(device)
     losses = criter(preds, target)
     model.zero_grad()
 
