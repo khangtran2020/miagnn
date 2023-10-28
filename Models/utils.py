@@ -69,7 +69,7 @@ def draw_conf(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
         preds = model.full(g=graph.to(device), x=graph.ndata['feat'].to(device)).cpu()
         log_p = torch.log(preds + 1e-12)
         conf = torch.sum(-1*preds*log_p, dim=1)
-        conf = torch.exp(conf) / torch.sum(torch.exp(conf))
+        conf = torch.nn.Sigmoid()(conf)
 
     conf = conf.numpy()
 
@@ -133,7 +133,7 @@ def draw_grad(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
         grad_overall = torch.cat((grad_overall, grad_sh), dim=0)
 
     grad_norm = grad_overall.detach().norm(p=2, dim=1).cpu()
-    grad_norm = torch.exp(grad_norm) / (torch.exp(grad_norm).sum() + 1e-12)
+    grad_norm = torch.nn.Sigmoid()(grad_norm)
     grad_norm = grad_norm.numpy()
 
     pos_mask_tr = graph.ndata['pos_mask_tr']
