@@ -72,10 +72,7 @@ def draw_conf(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
         log_p = torch.log(preds + 1e-12)
         conf = torch.sum(-1*preds*log_p, dim=1)
 
-    scaler = MinMaxScaler()
     conf = conf.numpy()
-    conf = scaler.fit_transform(conf.reshape(-1, 1))
-    conf = np.squeeze(conf)
 
     pos_mask_tr = graph.ndata['pos_mask_tr']
     neg_mask_tr = graph.ndata['neg_mask_tr']
