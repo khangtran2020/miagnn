@@ -65,11 +65,11 @@ def init_model(args):
 
 def draw_conf(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.device):
 
+    pred_fn = torch.nn.Softmax(dim=1)
     with torch.no_grad():
         model.to(device)
-        preds = model.full(g=graph.to(device), x=graph.ndata['feat'].to(device)).cpu()
+        preds = pred_fn(model.full(g=graph.to(device), x=graph.ndata['feat'].to(device))).cpu()
         log_p = torch.log(preds + 1e-12)
-        print(preds, log_p)
         conf = torch.sum(-1*preds*log_p, dim=1)
 
     scaler = MinMaxScaler()
@@ -103,8 +103,6 @@ def draw_conf(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
     cmap=plt.cm.Blues
     vmin = min(conf)
     vmax = max(conf)
-
-    print(f"Drawing confidence with: max {vmax}, min {vmin}")
 
     nx.draw_networkx_nodes(G,pos,nodelist=id_postr, node_color=conf[id_postr], cmap=cmap, node_shape='o', vmin=vmin, vmax=vmax)
     nx.draw_networkx_nodes(G,pos,nodelist=id_negtr, node_color=conf[id_negtr], cmap=cmap, node_shape='s', vmin=vmin, vmax=vmax)
