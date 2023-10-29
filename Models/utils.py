@@ -4,6 +4,7 @@ import torch
 import wandb
 import numpy as np
 import networkx as nx
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from PIL import Image
 from sklearn.preprocessing import MinMaxScaler
@@ -174,14 +175,16 @@ def draw_grad(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
     vmin = min(grad_norm)
     vmax = max(grad_norm)
 
+    nodes = nx.draw_networkx_nodes(G,pos, alpha=0, cmap=cmap, node_shape='o', vmin=vmin, vmax=vmax)
     nx.draw_networkx_nodes(G,pos,nodelist=id_postr, node_color=grad_norm[id_postr], cmap=cmap, node_shape='o', vmin=vmin, vmax=vmax)
     nx.draw_networkx_nodes(G,pos,nodelist=id_negtr, node_color=grad_norm[id_negtr], cmap=cmap, node_shape='s', vmin=vmin, vmax=vmax)
     nx.draw_networkx_nodes(G,pos,nodelist=id_poste, node_color=grad_norm[id_poste], cmap=cmap, node_shape='o', vmin=vmin, vmax=vmax)
     nx.draw_networkx_nodes(G,pos,nodelist=id_negte, node_color=grad_norm[id_negte], cmap=cmap, node_shape='s', vmin=vmin, vmax=vmax)
     nx.draw_networkx_edges(G,pos,arrows=True)
     # nx.draw_networkx_labels(G,pos)
-    sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin = vmin, vmax=vmax))
-    plt.colorbar(sm)
+    pc = mpl.collections.PatchCollection(nodes, cmap=plt.cm.Blues)
+    pc.set_array(grad_norm)
+    plt.colorbar(pc)
     plt.savefig("results/dict/shadow_graph_grad.jpg", bbox_inches='tight')
 
     img = Image.open("results/dict/shadow_graph_grad.jpg")
