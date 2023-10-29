@@ -138,7 +138,6 @@ def draw_grad(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
     grad_norm = grad_overall.detach().norm(p=2, dim=1).cpu()
     grad_norm = grad_norm.numpy()
     scaler = MinMaxScaler()
-    grad_norm = grad_norm.numpy()
     grad_norm = scaler.fit_transform(grad_norm.reshape(-1, 1))
     grad_norm = np.squeeze(grad_norm)
 
