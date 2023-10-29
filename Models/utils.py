@@ -74,6 +74,7 @@ def draw_conf(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
     scaler = MinMaxScaler()
     conf = conf.numpy()
     conf = scaler.fit_transform(conf.reshape(-1, 1))
+    conf = np.squeeze(conf)
 
     pos_mask_tr = graph.ndata['pos_mask_tr']
     neg_mask_tr = graph.ndata['neg_mask_tr']
@@ -139,6 +140,7 @@ def draw_grad(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
     scaler = MinMaxScaler()
     grad_norm = grad_norm.numpy()
     grad_norm = scaler.fit_transform(grad_norm.reshape(-1, 1))
+    grad_norm = np.squeeze(grad_norm)
 
     pos_mask_tr = graph.ndata['pos_mask_tr']
     neg_mask_tr = graph.ndata['neg_mask_tr']
