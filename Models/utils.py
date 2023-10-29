@@ -163,7 +163,7 @@ def draw_loss_grad(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:t
         save_dict(path=path, dct=pos)
 
     plt.figure(num=None, figsize=(15, 15))
-    cmap=plt.cm.Green
+    cmap=plt.cm.Greens   
     vmin = min(grad_norm)
     vmax = max(grad_norm)
 
