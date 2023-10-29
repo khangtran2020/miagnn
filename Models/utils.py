@@ -103,6 +103,8 @@ def draw_conf(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
     vmin = min(conf)
     vmax = max(conf)
 
+    print(f"Drawing confidence with: max {vmax}, min {vmin}")
+
     nx.draw_networkx_nodes(G,pos,nodelist=id_postr, node_color=conf[id_postr], cmap=cmap, node_shape='o', vmin=vmin, vmax=vmax)
     nx.draw_networkx_nodes(G,pos,nodelist=id_negtr, node_color=conf[id_negtr], cmap=cmap, node_shape='s', vmin=vmin, vmax=vmax)
     nx.draw_networkx_nodes(G,pos,nodelist=id_poste, node_color=conf[id_poste], cmap=cmap, node_shape='o', vmin=vmin, vmax=vmax)
