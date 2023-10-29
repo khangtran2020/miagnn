@@ -6,6 +6,7 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 from PIL import Image
+from sklearn.preprocessing import MinMaxScaler
 from networkx.drawing.nx_agraph import graphviz_layout
 from Utils.console import console
 from Utils.utils import read_pickel, save_dict
@@ -69,9 +70,10 @@ def draw_conf(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
         preds = model.full(g=graph.to(device), x=graph.ndata['feat'].to(device)).cpu()
         log_p = torch.log(preds + 1e-12)
         conf = torch.sum(-1*preds*log_p, dim=1)
-        conf = torch.nn.Sigmoid()(conf)
 
+    scaler = MinMaxScaler()
     conf = conf.numpy()
+    conf = scaler.fit_transform(conf.reshape(-1, 1))
 
     pos_mask_tr = graph.ndata['pos_mask_tr']
     neg_mask_tr = graph.ndata['neg_mask_tr']
@@ -133,8 +135,10 @@ def draw_grad(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
         grad_overall = torch.cat((grad_overall, grad_sh), dim=0)
 
     grad_norm = grad_overall.detach().norm(p=2, dim=1).cpu()
-    grad_norm = torch.nn.Sigmoid()(grad_norm)
     grad_norm = grad_norm.numpy()
+    scaler = MinMaxScaler()
+    grad_norm = grad_norm.numpy()
+    grad_norm = scaler.fit_transform(grad_norm.reshape(-1, 1))
 
     pos_mask_tr = graph.ndata['pos_mask_tr']
     neg_mask_tr = graph.ndata['neg_mask_tr']
