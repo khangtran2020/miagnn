@@ -92,6 +92,7 @@ def train(args, tr_loader:torch.utils.data.DataLoader, va_loader:torch.utils.dat
 
                 image_conf.append(img_conf)
                 image_grad.append(img_grad)
+                print(f"len of image confidence: {len(image_conf)}, and len of image grad: {len(image_grad)}")
 
             va_loss = va_loss / nva 
             va_perf = metrics.compute().item()
