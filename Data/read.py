@@ -20,6 +20,24 @@ def read_data(args, history, exist=False):
     graph, list_of_label = get_graph(data_name=args.data)
     graph = dgl.remove_self_loop(graph)
     graph.ndata['org_id'] = graph.nodes().clone()
+
+    if args.data_mode == 'density':
+        graph = reduce_desity(g=graph, dens_reduction=args.dens)
+        x = graph.ndata['feat']
+        y = graph.ndata['label']
+        nodes = graph.nodes()
+        src_edge, dst_edge = graph.edges()
+        prop_reduced = {
+            '# nodes': nodes.size(dim=0),
+            '# edges': int(src_edge.size(dim=0) / 2),
+            'Average degree': graph.in_degrees().float().mean().item(),
+            'Node homophily': dgl.node_homophily(graph=graph, y=y),
+            '# features': x.size(dim=1),
+            '# labels': y.max().item() + 1 
+        }
+        info['reduced_graph'] = prop_reduced
+        console.log(f"Done reducing density: :white_check_mark:")
+
     x = graph.ndata['feat']
     y = graph.ndata['label']
     nodes = graph.nodes()
@@ -437,19 +455,3 @@ def whitebox_split(graph:dgl.DGLGraph, history:Dict, exist:bool, ratio:float, de
     return graph
 
 
-# if args.data_mode == 'density':
-#     graph = reduce_desity(g=graph, dens_reduction=args.density)
-#     x = graph.ndata['feat']
-#     y = graph.ndata['label']
-#     nodes = graph.nodes()
-#     src_edge, dst_edge = graph.edges()
-#     prop_reduced = {
-#         '# nodes': nodes.size(dim=0),
-#         '# edges': int(src_edge.size(dim=0) / 2),
-#         'Average degree': graph.in_degrees().float().mean().item(),
-#         'Node homophily': dgl.node_homophily(graph=graph, y=y),
-#         '# features': x.size(dim=1),
-#         '# labels': y.max().item() + 1 
-#     }
-#     info['reduced_graph'] = prop_reduced
-#     console.log(f"Done reducing density: :white_check_mark:")
