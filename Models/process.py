@@ -164,6 +164,7 @@ def evaluate(args, te_loader:torch.utils.data.DataLoader, model:torch.nn.Module,
             metrics.reset()
 
 def log_images(images:list, mode:str):
+    print(f"Logging for mode {mode}: len of images is {len(images)}")
     columns=[f'{mode}_at_epoch_{i}' for i in range(len(images))]
     data = [[wandb.Image(img) for img in images]]
     test_table = wandb.Table(data=data, columns=columns)
