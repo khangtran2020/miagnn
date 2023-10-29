@@ -49,8 +49,8 @@ def node_split(args, graph:dgl.DGLGraph, val_size:float, test_size:float):
             _, id_sha, _, _ = train_test_split(id_tr, y_tr, test_size=args.sha_rat, stratify=y_tr)
             id_sha = np.concatenate((id_sha, id_te), axis=0)
         else:
-            _, id_sha_tr, _, _ = train_test_split(id_tr, y_tr, test_size= (400 / len(id_tr)), stratify=y_tr)
-            _, id_sha_te, _, _ = train_test_split(id_te, y_te, test_size= (400 / len(id_te)), stratify=y_te)
+            _, id_sha_tr, _, _ = train_test_split(id_tr, y_tr, test_size= (200 / len(id_tr)), stratify=y_tr)
+            _, id_sha_te, _, _ = train_test_split(id_te, y_te, test_size= (200 / len(id_te)), stratify=y_te)
             id_sha = np.concatenate((id_sha_tr, id_sha_te), axis=0)
         
     tr_mask = torch.zeros(graph.nodes().size(dim=0))
