@@ -194,3 +194,43 @@ def draw_loss_grad(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:t
     img_loss = Image.open("results/dict/shadow_graph_loss.jpg")
     img_loss = np.array(img_loss)
     return img_grad, img_loss
+
+# def draw_full(tar_g:dgl.DGLGraph, sha_g:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.device):
+
+#     # target model
+#     model.to(device)
+#     pred_fn = torch.nn.Softmax(dim=1)
+#     criter = torch.nn.CrossEntropyLoss(reduction='none')
+#     tar_pred = model.full(g=tar_g.to(device), x=tar_g.ndata['feat'].to(device))
+#     target = tar_g.ndata['label'].to(device)
+#     losses = criter(tar_pred, target)
+#     model.zero_grad()
+
+#     tar_grad = torch.Tensor([]).to(device)
+#     tar_loss = []
+    
+#     for los in losses:
+        
+#         los.backward(retain_graph=True)
+#         grad_sh = torch.Tensor([]).to(device)
+
+#         for name, p in model.named_parameters():
+#             if p.grad is not None:
+#                 new_grad = p.grad.detach().clone()
+#                 grad_sh = torch.cat((grad_sh, new_grad.flatten()), dim=0)
+#         model.zero_grad()
+#         grad_sh = torch.unsqueeze(grad_sh, dim=0)
+#         tar_grad = torch.cat((tar_grad, grad_sh), dim=0)
+#         tar_loss.append(los.detach().item())
+
+#     tar_grad = tar_grad.detach().norm(p=2, dim=1).cpu()
+#     tar_grad = tar_grad.numpy()
+#     tar_loss = np.array(tar_loss)
+
+#     log_tarp = torch.log(tar_pred.detach() + 1e-12)
+#     tar_conf = torch.sum(-1*tar_pred.detach()*log_tarp.detach(), dim=1)
+
+
+#     tar_conf = tar_conf.numpy()
+#     sha_conf = sha_conf.numpy()
+    

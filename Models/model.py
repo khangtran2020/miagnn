@@ -42,7 +42,7 @@ class GraphSAGE(nn.Module):
             h_dst = h[:blocks[0].num_dst_nodes()]
             h = self.layer(blocks[0], (h, h_dst))
             out_dict[f'out_{self.n_layers-1}'] = h[0]
-            return out_dict
+            return out_dict, h
 
     def forward(self, blocks, x):
         if self.n_layers > 1:

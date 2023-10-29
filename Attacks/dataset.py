@@ -12,12 +12,10 @@ class ShadowData(Dataset):
          
         # get nodes
         self.graph = graph.to(device)
-        org_nodes = self.graph.nodes()
-        idx_org = self.graph.ndata['org_id']
         mask = 'str_mask' if mode == 'train' else 'ste_mask'
         idx = get_index_by_value(a=self.graph.ndata[mask], val=1)
-        self.nodes = org_nodes[idx]
-        self.org_id = idx_org[idx]
+        self.nodes = idx
+        self.org_id = self.graph.ndata['org_id'][idx]
         self.num_layer = num_layer
         self.model = model.to(device)
         self.device = device
@@ -41,7 +39,9 @@ class ShadowData(Dataset):
         grad_dict = {}
         for name, p in self.model.named_parameters():
             if p.grad is not None:
-                grad_dict[name.replace('.', '-')] = p.grad.clone()
+                grad_dict[name.replace('.', '-')] = p.grad.detach().clone()
+        for key in out_dict.keys():
+            out_dict[key] = out_dict[key].detach().clone()
         self.model.zero_grad()
         return (org_id, loss, label, out_dict, grad_dict), membership_label
 
