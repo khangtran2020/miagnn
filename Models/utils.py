@@ -139,7 +139,7 @@ def draw_loss_grad(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:t
 
     grad_norm = grad_overall.detach().norm(p=2, dim=1).cpu()
     grad_norm = grad_norm.numpy()
-    grad_norm = np.squeeze(grad_norm)
+    loss_overall = np.array(loss_overall)
 
     pos_mask_tr = graph.ndata['pos_mask_tr']
     neg_mask_tr = graph.ndata['neg_mask_tr']
