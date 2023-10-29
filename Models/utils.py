@@ -162,8 +162,8 @@ def draw_grad(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
 
     nx.draw_networkx_nodes(G,pos,nodelist=id_postr, alpha=grad_norm[id_postr], node_color='tab:blue', node_shape='o')
     nx.draw_networkx_nodes(G,pos,nodelist=id_negtr, alpha=grad_norm[id_postr], node_color='tab:blue', node_shape='s')
-    nx.draw_networkx_nodes(G,pos,nodelist=id_poste, alpha=grad_norm[id_postr], node_color='tab:blue', node_shape='o')
-    nx.draw_networkx_nodes(G,pos,nodelist=id_negte, alpha=grad_norm[id_postr], node_color='tab:blue', node_shape='s')
+    nx.draw_networkx_nodes(G,pos,nodelist=id_poste, alpha=grad_norm[id_postr], node_color='tab:orange', node_shape='o')
+    nx.draw_networkx_nodes(G,pos,nodelist=id_negte, alpha=grad_norm[id_postr], node_color='tab:orange', node_shape='s')
     nx.draw_networkx_edges(G,pos,arrows=True)
     # nx.draw_networkx_labels(G,pos)
     plt.savefig("results/dict/shadow_graph_grad.jpg", bbox_inches='tight')
