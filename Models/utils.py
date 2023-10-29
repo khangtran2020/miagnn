@@ -106,6 +106,7 @@ def draw_conf(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
     nx.draw_networkx_nodes(G,pos,nodelist=id_negte, node_color=conf[id_negte], cmap=plt.cm.Blues, node_shape='s')
     nx.draw_networkx_edges(G,pos,arrows=True)
     # nx.draw_networkx_labels(G,pos)
+    plt.colorbar()
     plt.savefig("results/dict/shadow_graph_conf.jpg", bbox_inches='tight')
 
     img = Image.open("results/dict/shadow_graph_conf.jpg")
@@ -171,6 +172,7 @@ def draw_grad(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
     nx.draw_networkx_nodes(G,pos,nodelist=id_negte, node_color=grad_norm[id_negte], cmap=plt.cm.Blues, node_shape='s')
     nx.draw_networkx_edges(G,pos,arrows=True)
     # nx.draw_networkx_labels(G,pos)
+    plt.colorbar()
     plt.savefig("results/dict/shadow_graph_grad.jpg", bbox_inches='tight')
 
     img = Image.open("results/dict/shadow_graph_grad.jpg")
