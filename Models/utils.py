@@ -69,6 +69,7 @@ def draw_conf(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
         model.to(device)
         preds = model.full(g=graph.to(device), x=graph.ndata['feat'].to(device)).cpu()
         log_p = torch.log(preds + 1e-12)
+        print(preds, log_p)
         conf = torch.sum(-1*preds*log_p, dim=1)
 
     scaler = MinMaxScaler()
