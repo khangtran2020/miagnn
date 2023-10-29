@@ -99,14 +99,18 @@ def draw_conf(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
 
     plt.figure(num=None, figsize=(15, 15))
     plt.axis('off')
+    cmap=plt.cm.Blues
+    vmin = min(conf)
+    vmax = max(conf)
 
-    nx.draw_networkx_nodes(G,pos,nodelist=id_postr, node_color=conf[id_postr], cmap=plt.cm.Blues, node_shape='o')
-    nx.draw_networkx_nodes(G,pos,nodelist=id_negtr, node_color=conf[id_negtr], cmap=plt.cm.Blues, node_shape='s')
-    nx.draw_networkx_nodes(G,pos,nodelist=id_poste, node_color=conf[id_poste], cmap=plt.cm.Blues, node_shape='o')
-    nx.draw_networkx_nodes(G,pos,nodelist=id_negte, node_color=conf[id_negte], cmap=plt.cm.Blues, node_shape='s')
+    nx.draw_networkx_nodes(G,pos,nodelist=id_postr, node_color=conf[id_postr], cmap=cmap, node_shape='o', vmin=vmin, vmax=vmax)
+    nx.draw_networkx_nodes(G,pos,nodelist=id_negtr, node_color=conf[id_negtr], cmap=cmap, node_shape='s', vmin=vmin, vmax=vmax)
+    nx.draw_networkx_nodes(G,pos,nodelist=id_poste, node_color=conf[id_poste], cmap=cmap, node_shape='o', vmin=vmin, vmax=vmax)
+    nx.draw_networkx_nodes(G,pos,nodelist=id_negte, node_color=conf[id_negte], cmap=cmap, node_shape='s', vmin=vmin, vmax=vmax)
     nx.draw_networkx_edges(G,pos,arrows=True)
     # nx.draw_networkx_labels(G,pos)
-    plt.colorbar()
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin = vmin, vmax=vmax))
+    plt.colorbar(sm)
     plt.savefig("results/dict/shadow_graph_conf.jpg", bbox_inches='tight')
 
     img = Image.open("results/dict/shadow_graph_conf.jpg")
@@ -166,13 +170,18 @@ def draw_grad(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
     plt.figure(num=None, figsize=(15, 15))
     plt.axis('off')
 
-    nx.draw_networkx_nodes(G,pos,nodelist=id_postr, node_color=grad_norm[id_postr], cmap=plt.cm.Blues, node_shape='o')
-    nx.draw_networkx_nodes(G,pos,nodelist=id_negtr, node_color=grad_norm[id_negtr], cmap=plt.cm.Blues, node_shape='s')
-    nx.draw_networkx_nodes(G,pos,nodelist=id_poste, node_color=grad_norm[id_poste], cmap=plt.cm.Blues, node_shape='o')
-    nx.draw_networkx_nodes(G,pos,nodelist=id_negte, node_color=grad_norm[id_negte], cmap=plt.cm.Blues, node_shape='s')
+    cmap=plt.cm.Reds
+    vmin = min(grad_norm)
+    vmax = max(grad_norm)
+
+    nx.draw_networkx_nodes(G,pos,nodelist=id_postr, node_color=grad_norm[id_postr], cmap=cmap, node_shape='o', vmin=vmin, vmax=vmax)
+    nx.draw_networkx_nodes(G,pos,nodelist=id_negtr, node_color=grad_norm[id_negtr], cmap=cmap, node_shape='s', vmin=vmin, vmax=vmax)
+    nx.draw_networkx_nodes(G,pos,nodelist=id_poste, node_color=grad_norm[id_poste], cmap=cmap, node_shape='o', vmin=vmin, vmax=vmax)
+    nx.draw_networkx_nodes(G,pos,nodelist=id_negte, node_color=grad_norm[id_negte], cmap=cmap, node_shape='s', vmin=vmin, vmax=vmax)
     nx.draw_networkx_edges(G,pos,arrows=True)
     # nx.draw_networkx_labels(G,pos)
-    plt.colorbar()
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin = vmin, vmax=vmax))
+    plt.colorbar(sm)
     plt.savefig("results/dict/shadow_graph_grad.jpg", bbox_inches='tight')
 
     img = Image.open("results/dict/shadow_graph_grad.jpg")
