@@ -111,7 +111,7 @@ def train(args, tr_loader:torch.utils.data.DataLoader, va_loader:torch.utils.dat
             history['train_history_acc'].append(tr_perf)
             history['val_history_loss'].append(va_loss)
             history['val_history_acc'].append(va_perf)
-            es(epoch=epoch, epoch_score=va_perf, model=model, model_path=args.model_path + model_name)
+            es(epoch=epoch, epoch_score=tr_perf, model=model, model_path=args.model_path + model_name)
             tracker_log(dct = results)
             progress.console.print(f"Epoch {epoch}: [yellow]loss[/yellow]: {tr_loss}, [yellow]acc[/yellow]: {tr_perf}, [yellow]va_loss[/yellow]: {va_loss}, [yellow]va_acc[/yellow]: {va_perf}") 
             progress.advance(task1)
