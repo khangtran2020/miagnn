@@ -98,7 +98,7 @@ def draw_conf(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
         save_dict(path=path, dct=pos)
 
     plt.figure(num=None, figsize=(15, 15))
-    plt.axis('off')
+    # plt.axis('off')
     cmap=plt.cm.Blues
     vmin = min(conf)
     vmax = max(conf)
@@ -168,7 +168,7 @@ def draw_grad(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
         save_dict(path=path, dct=pos)
 
     plt.figure(num=None, figsize=(15, 15))
-    plt.axis('off')
+    # plt.axis('off')
 
     cmap=plt.cm.Reds
     vmin = min(grad_norm)
