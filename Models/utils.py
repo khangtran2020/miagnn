@@ -116,7 +116,7 @@ def draw_conf(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
     img_arr = np.array(img)
     return img_arr
 
-def draw_grad(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.device):
+def draw_loss_grad(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.device):
 
     model.to(device)
     criter = torch.nn.CrossEntropyLoss(reduction='none')
@@ -126,6 +126,7 @@ def draw_grad(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
     model.zero_grad()
 
     grad_overall = torch.Tensor([]).to(device)
+    loss_overall = []
     for los in losses:
         
         los.backward(retain_graph=True)
@@ -138,11 +139,10 @@ def draw_grad(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
         model.zero_grad()
         grad_sh = torch.unsqueeze(grad_sh, dim=0)
         grad_overall = torch.cat((grad_overall, grad_sh), dim=0)
+        loss_overall.append(los.detach().item())
 
     grad_norm = grad_overall.detach().norm(p=2, dim=1).cpu()
     grad_norm = grad_norm.numpy()
-    scaler = MinMaxScaler()
-    grad_norm = scaler.fit_transform(grad_norm.reshape(-1, 1))
     grad_norm = np.squeeze(grad_norm)
 
     pos_mask_tr = graph.ndata['pos_mask_tr']
@@ -167,8 +167,6 @@ def draw_grad(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
         save_dict(path=path, dct=pos)
 
     plt.figure(num=None, figsize=(15, 15))
-    # plt.axis('off')
-
     cmap=plt.cm.Reds
     vmin = min(grad_norm)
     vmax = max(grad_norm)
@@ -181,6 +179,22 @@ def draw_grad(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
     # nx.draw_networkx_labels(G,pos)
     plt.savefig("results/dict/shadow_graph_grad.jpg", bbox_inches='tight')
 
-    img = Image.open("results/dict/shadow_graph_grad.jpg")
-    img_arr = np.array(img)
-    return img_arr
+    img_grad = Image.open("results/dict/shadow_graph_grad.jpg")
+    img_grad = np.array(img_grad)
+
+    plt.figure(num=None, figsize=(15, 15))
+    cmap=plt.cm.Reds
+    vmin = min(loss_overall)
+    vmax = max(loss_overall)
+
+    nx.draw_networkx_nodes(G,pos,nodelist=id_postr, node_color=loss_overall[id_postr], cmap=cmap, node_shape='o', vmin=vmin, vmax=vmax)
+    nx.draw_networkx_nodes(G,pos,nodelist=id_negtr, node_color=loss_overall[id_negtr], cmap=cmap, node_shape='s', vmin=vmin, vmax=vmax)
+    nx.draw_networkx_nodes(G,pos,nodelist=id_poste, node_color=loss_overall[id_poste], cmap=cmap, node_shape='o', vmin=vmin, vmax=vmax)
+    nx.draw_networkx_nodes(G,pos,nodelist=id_negte, node_color=loss_overall[id_negte], cmap=cmap, node_shape='s', vmin=vmin, vmax=vmax)
+    nx.draw_networkx_edges(G,pos,arrows=True)
+    # nx.draw_networkx_labels(G,pos)
+    plt.savefig("results/dict/shadow_graph_loss.jpg", bbox_inches='tight')
+
+    img_loss = Image.open("results/dict/shadow_graph_loss.jpg")
+    img_loss = np.array(img_loss)
+    return img_grad, img_loss

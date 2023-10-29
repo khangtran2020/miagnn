@@ -40,6 +40,7 @@ def train(args, tr_loader:torch.utils.data.DataLoader, va_loader:torch.utils.dat
         if args.debug == 1:
             image_conf = []
             image_grad = []
+            image_loss = []
 
         for epoch in range(args.epochs):
             tr_loss = 0
@@ -88,11 +89,12 @@ def train(args, tr_loader:torch.utils.data.DataLoader, va_loader:torch.utils.dat
 
             if (args.debug == 1) and (epoch % int(0.1*args.epochs) == 0):
                 img_conf = draw_conf(graph=sha_g, model=model, path=args.res_path + f"{name_pos}-shapos.pkl", device=device)
-                img_grad = draw_grad(graph=sha_g, model=model, path=args.res_path + f"{name_pos}-shapos.pkl", device=device)
+                img_grad, img_loss = draw_grad(graph=sha_g, model=model, path=args.res_path + f"{name_pos}-shapos.pkl", device=device)
 
                 image_conf.append(img_conf)
                 image_grad.append(img_grad)
-                print(f"len of image confidence: {len(image_conf)}, and len of image grad: {len(image_grad)}")
+                image_loss.append(img_loss)
+                print(f"len of image confidence: {len(image_conf)}, len of image grad: {len(image_grad)}, and len of image loss: {len(image_loss)}")
 
             va_loss = va_loss / nva 
             va_perf = metrics.compute().item()
@@ -117,6 +119,7 @@ def train(args, tr_loader:torch.utils.data.DataLoader, va_loader:torch.utils.dat
         if args.debug == 1:
             log_images(images=image_conf, mode='Confidence')
             log_images(images=image_grad, mode="Grad norm")
+            log_images(images=image_loss, mode="Loss")
 
         console.log(f"Done Training target model: :white_check_mark:")
     model.load_state_dict(torch.load(args.model_path + model_name))
