@@ -6,7 +6,6 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 from PIL import Image
-from sklearn.preprocessing import MinMaxScaler
 from networkx.drawing.nx_agraph import graphviz_layout
 from Utils.console import console
 from Utils.utils import read_pickel, save_dict
