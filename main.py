@@ -44,7 +44,7 @@ def run(args, current_time, device):
             sha_g = whitebox_split(graph=sha_g, history=data_hist, exist=exist_data, ratio=args.diff_rat, debug=args.debug)
         if args.debug == 1: 
             check_overlap(graph=sha_g, mode='shadow')
-            shadow_visualization(graph=sha_g, path=args.res_path + f"{name['data']}-shapos.pkl", name=name['data'])
+            shadow_visualization(graph=sha_g, path=args.res_path + f"{args.proj_name}-shapos.pkl", name=args.proj_name)
         console.log(f"Done Initializing Shadow Data: :white_check_mark:")
 
     with console.status("Initializing Target Model") as status:
@@ -71,7 +71,7 @@ def run(args, current_time, device):
     if exist_model == False:
         tr_loader, va_loader, te_loader = init_loader(args=args, device=device, graph=tar_g)
         model, model_hist = train(args=args, tr_loader=tr_loader, va_loader=va_loader, sha_g=sha_g, model=model, device=device, 
-                                  history=model_hist, name=name['model'], name_pos=name['data'])
+                                  history=model_hist, name=name['model'], name_pos=args.proj_name)
         evaluate(args=args, te_loader=te_loader, model=model, device=device, history=model_hist)
 
     if args.att_mode == 'blackbox':
