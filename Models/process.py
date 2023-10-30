@@ -3,11 +3,11 @@ import torch
 import torchmetrics
 from rich.progress import Progress
 from typing import Dict
-from Models.utils import EarlyStopping, draw_conf, draw_loss_grad
+from Models.utils import EarlyStopping, draw_conf, draw_loss_grad, draw_full
 from Utils.console import console
 from Utils.tracking import tracker_log, wandb
 
-def train(args, tr_loader:torch.utils.data.DataLoader, va_loader:torch.utils.data.DataLoader, sha_g:dgl.DGLGraph,
+def train(args, tr_loader:torch.utils.data.DataLoader, va_loader:torch.utils.data.DataLoader, tar_g:dgl.DGLGraph, sha_g:dgl.DGLGraph,
           model:torch.nn.Module, device:torch.device, history:Dict, name:str, name_pos:str=None):
     
     model_name = '{}.pt'.format(name)
@@ -41,6 +41,11 @@ def train(args, tr_loader:torch.utils.data.DataLoader, va_loader:torch.utils.dat
             image_conf = []
             image_grad = []
             image_loss = []
+
+            image_conf_full = []
+            image_grad_full = []
+            image_loss_full = []
+
         indx = 0
         for epoch in range(args.epochs):
             tr_loss = 0
@@ -87,13 +92,19 @@ def train(args, tr_loader:torch.utils.data.DataLoader, va_loader:torch.utils.dat
                     # progress.console.print("[yellow]va_loss[/yellow]: {0:.3f}, [yellow]va_acc[/yellow]: {0:.3f}".format(loss.item()/preds.size(dim=0), metrics.computes().item())) 
                     progress.advance(task3)
 
-            if (args.debug == 1) and (epoch % int(0.1*args.epochs) == 0):
+            if (args.debug == 1) and (epoch % int(0.2*args.epochs) == 0):
                 img_conf = draw_conf(graph=sha_g, model=model, path=args.res_path + f"{name_pos}-shapos.pkl", device=device, name_plot=f'{name_pos}_{indx+1}')
                 img_grad, img_loss = draw_loss_grad(graph=sha_g, model=model, path=args.res_path + f"{name_pos}-shapos.pkl", device=device, name_plot=f'{name_pos}_{indx+1}')
+                
+                img_conf_full, img_grad_full, img_loss_full = draw_full(tar_g=tar_g, sha_g=sha_g, model=model, path=args.res_path + f"{name_pos}-full.pkl", device=device, name_plot=f'{name_pos}_{indx+1}')
 
                 image_conf.append(img_conf)
                 image_grad.append(img_grad)
                 image_loss.append(img_loss)
+
+                image_conf_full.append(img_conf_full)
+                image_grad_full.append(img_grad_full)
+                image_loss_full.append(img_loss_full)
                 indx += 1
                 print(f"len of image confidence: {len(image_conf)}, len of image grad: {len(image_grad)}, and len of image loss: {len(image_loss)}")
 
@@ -121,6 +132,10 @@ def train(args, tr_loader:torch.utils.data.DataLoader, va_loader:torch.utils.dat
             log_images(images=image_conf, mode='Confidence')
             log_images(images=image_grad, mode="Grad norm")
             log_images(images=image_loss, mode="Loss")
+
+            log_images(images=image_conf_full, mode='Confidence Full')
+            log_images(images=image_grad_full, mode="Grad norm Full")
+            log_images(images=image_loss_full, mode="Loss Full")
 
         console.log(f"Done Training target model: :white_check_mark:")
     model.load_state_dict(torch.load(args.model_path + model_name))

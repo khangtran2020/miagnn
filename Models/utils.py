@@ -193,3 +193,176 @@ def draw_loss_grad(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:t
     img_loss = Image.open(f"results/dict/{name_plot}_loss.jpg")
     img_loss = np.array(img_loss)
     return img_grad, img_loss
+
+def draw_full(tar_g:dgl.DGLGraph, sha_g:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.device, name_plot:str):
+
+    model.to(device)
+    criter = torch.nn.CrossEntropyLoss(reduction='none')
+    pred_fn = torch.nn.Softmax(dim=1)
+
+    # target graph
+    tar_label = tar_g.ndata['label'].to(device)
+    tar_preds = model.full(g=tar_g.to(device), x=tar_g.ndata['feat'].to(device))
+    tar_losses = criter(tar_preds, tar_label)
+    model.zero_grad()
+
+    tar_grad = torch.Tensor([]).to(device)
+    for los in tar_losses:
+        
+        los.backward(retain_graph=True)
+        grad_sh = torch.Tensor([]).to(device)
+
+        for name, p in model.named_parameters():
+            if p.grad is not None:
+                new_grad = p.grad.detach().clone()
+                grad_sh = torch.cat((grad_sh, new_grad.flatten()), dim=0)
+        model.zero_grad()
+        grad_sh = torch.unsqueeze(grad_sh, dim=0)
+        tar_grad = torch.cat((tar_grad, grad_sh), dim=0)
+    
+    tar_grad = tar_grad.detach().norm(p=2, dim=1).cpu().numpy()
+    tar_losses = tar_losses.detach().cpu().numpy()
+
+    tar_preds = pred_fn(tar_preds.detach())
+    log_tar_preds = torch.log(tar_preds + 1e-12)
+    tar_conf = torch.sum(-1*tar_preds*log_tar_preds, dim=1).cpu().numpy()
+
+    # shadow graph
+    sha_label = sha_g.ndata['label'].to(device)
+    sha_preds = model.full(g=sha_g.to(device), x=sha_g.ndata['feat'].to(device))
+    sha_losses = criter(sha_preds, sha_label)
+    model.zero_grad()
+
+    sha_grad = torch.Tensor([]).to(device)
+    for los in sha_losses:
+        
+        los.backward(retain_graph=True)
+        grad_sh = torch.Tensor([]).to(device)
+
+        for name, p in model.named_parameters():
+            if p.grad is not None:
+                new_grad = p.grad.detach().clone()
+                grad_sh = torch.cat((grad_sh, new_grad.flatten()), dim=0)
+        model.zero_grad()
+        grad_sh = torch.unsqueeze(grad_sh, dim=0)
+        sha_grad = torch.cat((sha_grad, grad_sh), dim=0)
+
+    sha_grad = sha_grad.detach().norm(p=2, dim=1).cpu().numpy()
+    sha_losses = sha_losses.detach().cpu().numpy()
+
+    sha_preds = pred_fn(sha_preds.detach())
+    log_sha_preds = torch.log(sha_preds + 1e-12)
+    sha_conf = torch.sum(-1*sha_preds*log_sha_preds, dim=1).cpu().numpy()
+
+    # getting max and min for loss / grad / conf
+    lmin = min(min(tar_losses), min(sha_losses))
+    lmax = max(max(tar_losses), max(sha_losses))
+
+    gmin = min(min(tar_grad), min(sha_grad))
+    gmax = max(max(tar_grad), max(sha_grad))
+
+    cmin = min(min(tar_conf), min(sha_conf))
+    cmax = max(max(tar_conf), max(sha_conf))
+
+    # getting position
+    if os.path.exists(path=path):
+        pos_mask = tar_g.ndata['tr_mask']
+        neg_mask = tar_g.ndata['te_mask']
+        id_pos_tar = (pos_mask == 1).nonzero(as_tuple=True)[0].tolist()
+        id_neg_tar = (neg_mask == 1).nonzero(as_tuple=True)[0].tolist()
+
+        pos_mask = sha_g.ndata['tr_mask']
+        neg_mask = sha_g.ndata['te_mask']
+        id_pos_sha = (pos_mask == 1).nonzero(as_tuple=True)[0].tolist()
+        id_neg_sha = (neg_mask == 1).nonzero(as_tuple=True)[0].tolist()
+        pos = read_pickel(path)
+    else:
+
+        # target graph
+        pos_mask = tar_g.ndata['tr_mask']
+        neg_mask = tar_g.ndata['te_mask']
+        id_pos_tar = (pos_mask == 1).nonzero(as_tuple=True)[0].tolist()
+        id_neg_tar = (neg_mask == 1).nonzero(as_tuple=True)[0].tolist()
+
+        pos_pos = np.random.normal(loc=5.0, scale=1.0, size=(len(id_pos_tar), 2))
+        pos_pos = list(zip(pos_pos[:,0], pos_pos[:,1]))
+        pos_tar_pos = dict(zip(id_pos_tar, pos_pos))
+
+
+        pos_neg = np.random.normal(loc=2.0, scale=0.5, size=(len(id_neg_tar), 2))
+        pos_neg = list(zip(pos_neg[:,0], pos_neg[:,1]))
+        pos_tar_neg = dict(zip(id_neg_tar, pos_neg))
+
+        pos_tar = pos_tar_pos.update(pos_tar_neg)
+
+        # shadow graph
+        pos_mask = sha_g.ndata['tr_mask']
+        neg_mask = sha_g.ndata['te_mask']
+        id_pos_sha = (pos_mask == 1).nonzero(as_tuple=True)[0].tolist()
+        id_neg_sha = (neg_mask == 1).nonzero(as_tuple=True)[0].tolist()
+
+        pos_pos = np.random.normal(loc=-1.0, scale=0.5, size=(len(id_pos_sha), 2))
+        pos_pos = list(zip(pos_pos[:,0], pos_pos[:,1]))
+        pos_sha_pos = dict(zip(id_pos_sha, pos_pos))
+
+
+        pos_neg = np.random.normal(loc=-2.0, scale=0.5, size=(len(id_neg_sha), 2))
+        pos_neg = list(zip(pos_neg[:,0], pos_neg[:,1]))
+        pos_sha_neg = dict(zip(id_neg_sha, pos_neg))
+
+        pos_sha = pos_sha_pos.update(pos_sha_neg)
+
+        pos = {
+            'tar': pos_tar,
+            'sha': pos_sha
+        }
+        save_dict(path=path, dct=pos)
+
+    G_tar = tar_g.to_networkx()
+    G_sha = sha_g.to_networkx()
+
+    # plot grad norm
+    plt.figure(num=None, figsize=(20, 20))
+    cmap=plt.cm.Greens
+
+    nx.draw_networkx_nodes(G_tar,pos['tar'],nodelist=id_pos_tar, node_color=tar_grad[id_pos_tar], cmap=cmap, node_shape='o', vmin=gmin, vmax=gmax)
+    nx.draw_networkx_nodes(G_tar,pos['tar'],nodelist=id_neg_tar, node_color=tar_grad[id_neg_tar], cmap=cmap, node_shape='s', vmin=gmin, vmax=gmax)
+    nx.draw_networkx_edges(G_tar,pos['tar'],arrows=True)
+
+    nx.draw_networkx_nodes(G_sha,pos['sha'],nodelist=id_pos_sha, node_color=sha_grad[id_pos_sha], cmap=cmap, node_shape='o', vmin=gmin, vmax=gmax)
+    nx.draw_networkx_nodes(G_sha,pos['sha'],nodelist=id_neg_sha, node_color=sha_grad[id_neg_sha], cmap=cmap, node_shape='s', vmin=gmin, vmax=gmax)
+    nx.draw_networkx_edges(G_sha,pos['sha'],arrows=True)
+    plt.savefig(f"results/dict/{name_plot}-grad-full.jpg", bbox_inches='tight')
+    img_grad = Image.open(f"results/dict/{name_plot}-grad-full.jpg")
+    img_grad = np.array(img_grad)
+
+    # plot loss
+    plt.figure(num=None, figsize=(20, 20))
+    cmap=plt.cm.Reds
+
+    nx.draw_networkx_nodes(G_tar,pos['tar'],nodelist=id_pos_tar, node_color=tar_losses[id_pos_tar], cmap=cmap, node_shape='o', vmin=lmin, vmax=lmax)
+    nx.draw_networkx_nodes(G_tar,pos['tar'],nodelist=id_neg_tar, node_color=tar_losses[id_neg_tar], cmap=cmap, node_shape='s', vmin=lmin, vmax=lmax)
+    nx.draw_networkx_edges(G_tar,pos['tar'],arrows=True)
+
+    nx.draw_networkx_nodes(G_sha,pos['sha'],nodelist=id_pos_sha, node_color=sha_losses[id_pos_sha], cmap=cmap, node_shape='o', vmin=lmin, vmax=lmax)
+    nx.draw_networkx_nodes(G_sha,pos['sha'],nodelist=id_neg_sha, node_color=sha_losses[id_neg_sha], cmap=cmap, node_shape='s', vmin=lmin, vmax=lmax)
+    nx.draw_networkx_edges(G_sha,pos['sha'],arrows=True)
+    plt.savefig(f"results/dict/{name_plot}-loss-full.jpg", bbox_inches='tight')
+    img_loss = Image.open(f"results/dict/{name_plot}-loss-full.jpg")
+    img_loss = np.array(img_loss)
+
+    plt.figure(num=None, figsize=(20, 20))
+    cmap=plt.cm.Blues
+
+    nx.draw_networkx_nodes(G_tar,pos['tar'],nodelist=id_pos_tar, node_color=tar_conf[id_pos_tar], cmap=cmap, node_shape='o', vmin=cmin, vmax=cmax)
+    nx.draw_networkx_nodes(G_tar,pos['tar'],nodelist=id_neg_tar, node_color=tar_conf[id_neg_tar], cmap=cmap, node_shape='s', vmin=cmin, vmax=cmax)
+    nx.draw_networkx_edges(G_tar,pos['tar'],arrows=True)
+
+    nx.draw_networkx_nodes(G_sha,pos['sha'],nodelist=id_pos_sha, node_color=sha_conf[id_pos_sha], cmap=cmap, node_shape='o', vmin=cmin, vmax=cmax)
+    nx.draw_networkx_nodes(G_sha,pos['sha'],nodelist=id_neg_sha, node_color=sha_conf[id_neg_sha], cmap=cmap, node_shape='s', vmin=cmin, vmax=cmax)
+    nx.draw_networkx_edges(G_sha,pos['sha'],arrows=True)
+    plt.savefig(f"results/dict/{name_plot}-conf-full.jpg", bbox_inches='tight')
+    img_conf = Image.open(f"results/dict/{name_plot}-conf-full.jpg")
+    img_conf = np.array(img_conf)
+
+    return img_conf, img_grad, img_loss

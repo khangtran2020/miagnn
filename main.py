@@ -70,7 +70,7 @@ def run(args, current_time, device):
         
     if exist_model == False:
         tr_loader, va_loader, te_loader = init_loader(args=args, device=device, graph=tar_g)
-        model, model_hist = train(args=args, tr_loader=tr_loader, va_loader=va_loader, sha_g=sha_g, model=model, device=device, 
+        model, model_hist = train(args=args, tr_loader=tr_loader, va_loader=va_loader, tar_g=tar_g, sha_g=sha_g, model=model, device=device, 
                                   history=model_hist, name=name['model'], name_pos=args.proj_name)
         evaluate(args=args, te_loader=te_loader, model=model, device=device, history=model_hist)
 
