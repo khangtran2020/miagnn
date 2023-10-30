@@ -309,7 +309,7 @@ def shadow_visualization(graph:dgl.DGLGraph, path:str):
     if os.path.exists(path=path):
         pos = read_pickel(path)
     else:
-        pos = nx.spring_layout(G, iterations=200)
+        pos = nx.spring_layout(G)
         save_dict(path=path, dct=pos)
 
     plt.figure(num=None, figsize=(15, 15))
