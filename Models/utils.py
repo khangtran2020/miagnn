@@ -6,7 +6,6 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 from PIL import Image
-from networkx.drawing.nx_agraph import graphviz_layout
 from Utils.console import console
 from Utils.utils import read_pickel, save_dict
 from Models.model import GraphSAGE, GAT
@@ -91,7 +90,7 @@ def draw_conf(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
     if os.path.exists(path=path):
         pos = read_pickel(path)
     else:
-        pos = graphviz_layout(G)
+        pos = nx.spring_layout(G, iterations=200)
         save_dict(path=path, dct=pos)
 
     plt.figure(num=None, figsize=(15, 15))
@@ -159,7 +158,7 @@ def draw_loss_grad(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:t
     if os.path.exists(path=path):
         pos = read_pickel(path)
     else:
-        pos = graphviz_layout(G)
+        pos = nx.spring_layout(G, iterations=200)
         save_dict(path=path, dct=pos)
 
     plt.figure(num=None, figsize=(15, 15))
