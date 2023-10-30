@@ -453,5 +453,3 @@ def whitebox_split(graph:dgl.DGLGraph, history:Dict, exist:bool, ratio:float, de
     log_table(dct=info, name=f'Shadow graph whitebox info')
     tracker_log_table(dct=info, name='Shadow graph of whitebox attack')
     return graph
-
-
