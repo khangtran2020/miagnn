@@ -9,7 +9,6 @@ from copy import deepcopy
 from typing import Dict
 from PIL import Image
 from sklearn.model_selection import train_test_split
-from networkx.drawing.nx_agraph import graphviz_layout
 from Utils.utils import get_index_by_value, get_index_by_list, read_pickel, save_dict
 from Utils.console import console
 
@@ -310,7 +309,7 @@ def shadow_visualization(graph:dgl.DGLGraph, path:str):
     if os.path.exists(path=path):
         pos = read_pickel(path)
     else:
-        pos = graphviz_layout(G)
+        pos = nx.spring_layout(G, iterations=200)
         save_dict(path=path, dct=pos)
 
     plt.figure(num=None, figsize=(15, 15))
