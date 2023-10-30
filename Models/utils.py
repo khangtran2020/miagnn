@@ -6,6 +6,7 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 from PIL import Image
+from rich.pretty import pretty_repr
 from Utils.console import console
 from Utils.utils import read_pickel, save_dict
 from Models.model import GraphSAGE, GAT
@@ -317,6 +318,8 @@ def draw_full(tar_g:dgl.DGLGraph, sha_g:dgl.DGLGraph, model:torch.nn.Module, pat
             'sha': pos_sha
         }
         save_dict(path=path, dct=pos)
+
+    print(pretty_repr(pos))
 
     G_tar = tar_g.to_networkx()
     G_sha = sha_g.to_networkx()
