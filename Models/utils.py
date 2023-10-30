@@ -294,6 +294,9 @@ def draw_full(tar_g:dgl.DGLGraph, sha_g:dgl.DGLGraph, model:torch.nn.Module, pat
         pos_neg = list(zip(pos_neg[:,0], pos_neg[:,1]))
         pos_tar_neg = dict(zip(id_neg_tar, pos_neg))
 
+        print(f"Target pos:",pretty_repr(pos_tar_pos))
+        print(f"Target neg:",pretty_repr(pos_tar_neg))
+
         pos_tar = pos_tar_pos.update(pos_tar_neg)
 
         # shadow graph
@@ -311,6 +314,9 @@ def draw_full(tar_g:dgl.DGLGraph, sha_g:dgl.DGLGraph, model:torch.nn.Module, pat
         pos_neg = list(zip(pos_neg[:,0], pos_neg[:,1]))
         pos_sha_neg = dict(zip(id_neg_sha, pos_neg))
 
+        print(f"Shadow pos:",pretty_repr(pos_sha_pos))
+        print(f"Shadow neg:",pretty_repr(pos_sha_neg))
+
         pos_sha = pos_sha_pos.update(pos_sha_neg)
 
         pos = {
@@ -318,8 +324,6 @@ def draw_full(tar_g:dgl.DGLGraph, sha_g:dgl.DGLGraph, model:torch.nn.Module, pat
             'sha': pos_sha
         }
         save_dict(path=path, dct=pos)
-
-    print(pretty_repr(pos))
 
     G_tar = tar_g.to_networkx()
     G_sha = sha_g.to_networkx()
