@@ -315,7 +315,7 @@ def shadow_visualization(graph:dgl.DGLGraph, path:str, name:str):
         pos_postr_y = np.random.normal(loc=1.0, scale=0.5, size=len(id_postr))
         pos_postr = list(zip(pos_postr_x, pos_postr_y))
         pos = dict(zip(id_postr, pos_postr))
-
+        print(pos)
 
         pos_negtr_x = np.random.normal(loc=-1.0, scale=0.5, size=len(id_negtr))
         pos_negtr_y = np.random.normal(loc=-1.0, scale=0.5, size=len(id_negtr))
