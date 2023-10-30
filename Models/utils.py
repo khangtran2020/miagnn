@@ -61,7 +61,7 @@ def init_model(args):
                     num_head=args.nhead, dropout=args.dout)
     return model
 
-def draw_conf(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.device):
+def draw_conf(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.device, name:str):
 
     pred_fn = torch.nn.Softmax(dim=1)
     with torch.no_grad():
@@ -105,13 +105,13 @@ def draw_conf(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
     nx.draw_networkx_nodes(G,pos,nodelist=id_negte, node_color=conf[id_negte], cmap=cmap, node_shape='s', vmin=vmin, vmax=vmax)
     nx.draw_networkx_edges(G,pos,arrows=True)
     # nx.draw_networkx_labels(G,pos)
-    plt.savefig("results/dict/shadow_graph_conf.jpg", bbox_inches='tight')
+    plt.savefig(f"results/dict/{name}_conf.jpg", bbox_inches='tight')
 
-    img = Image.open("results/dict/shadow_graph_conf.jpg")
+    img = Image.open(f"results/dict/{name}_conf.jpg")
     img_arr = np.array(img)
     return img_arr
 
-def draw_loss_grad(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.device):
+def draw_loss_grad(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.device, name:str):
 
     model.to(device)
     criter = torch.nn.CrossEntropyLoss(reduction='none')
@@ -172,9 +172,9 @@ def draw_loss_grad(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:t
     nx.draw_networkx_nodes(G,pos,nodelist=id_negte, node_color=grad_norm[id_negte], cmap=cmap, node_shape='s', vmin=vmin, vmax=vmax)
     nx.draw_networkx_edges(G,pos,arrows=True)
     # nx.draw_networkx_labels(G,pos)
-    plt.savefig("results/dict/shadow_graph_grad.jpg", bbox_inches='tight')
+    plt.savefig(f"results/dict/{name}_grad.jpg", bbox_inches='tight')
 
-    img_grad = Image.open("results/dict/shadow_graph_grad.jpg")
+    img_grad = Image.open(f"results/dict/{name}_grad.jpg")
     img_grad = np.array(img_grad)
 
     plt.figure(num=None, figsize=(15, 15))
@@ -188,8 +188,8 @@ def draw_loss_grad(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:t
     nx.draw_networkx_nodes(G,pos,nodelist=id_negte, node_color=loss_overall[id_negte], cmap=cmap, node_shape='s', vmin=vmin, vmax=vmax)
     nx.draw_networkx_edges(G,pos,arrows=True)
     # nx.draw_networkx_labels(G,pos)
-    plt.savefig("results/dict/shadow_graph_loss.jpg", bbox_inches='tight')
+    plt.savefig(f"results/dict/{name}_loss.jpg", bbox_inches='tight')
 
-    img_loss = Image.open("results/dict/shadow_graph_loss.jpg")
+    img_loss = Image.open(f"results/dict/{name}_loss.jpg")
     img_loss = np.array(img_loss)
     return img_grad, img_loss

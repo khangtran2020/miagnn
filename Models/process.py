@@ -88,8 +88,8 @@ def train(args, tr_loader:torch.utils.data.DataLoader, va_loader:torch.utils.dat
                     progress.advance(task3)
 
             if (args.debug == 1) and (epoch % int(0.1*args.epochs) == 0):
-                img_conf = draw_conf(graph=sha_g, model=model, path=args.res_path + f"{name_pos}-shapos.pkl", device=device)
-                img_grad, img_loss = draw_loss_grad(graph=sha_g, model=model, path=args.res_path + f"{name_pos}-shapos.pkl", device=device)
+                img_conf = draw_conf(graph=sha_g, model=model, path=args.res_path + f"{name_pos}-shapos.pkl", device=device, name=name_pos)
+                img_grad, img_loss = draw_loss_grad(graph=sha_g, model=model, path=args.res_path + f"{name_pos}-shapos.pkl", device=device, name=name_pos)
 
                 image_conf.append(img_conf)
                 image_grad.append(img_grad)

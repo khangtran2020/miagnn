@@ -288,7 +288,7 @@ def check_overlap(graph:dgl.DGLGraph, mode:str):
         else:
             console.log(f"Node overlap between train & test: :x:\n{get_index_by_list(arr=te_nodes, test_arr=tr_nodes)}\n{get_index_by_list(arr=tr_nodes, test_arr=te_nodes)}")
 
-def shadow_visualization(graph:dgl.DGLGraph, path:str):
+def shadow_visualization(graph:dgl.DGLGraph, path:str, name:str):
 
     pos_mask_tr = graph.ndata['pos_mask_tr']
     neg_mask_tr = graph.ndata['neg_mask_tr']
@@ -321,9 +321,9 @@ def shadow_visualization(graph:dgl.DGLGraph, path:str):
     nx.draw_networkx_nodes(G,pos,nodelist=id_negte, alpha=0.2, node_color='tab:orange', node_shape='s')
     nx.draw_networkx_edges(G,pos,arrows=True)
     # nx.draw_networkx_labels(G,pos)
-    plt.savefig("results/dict/shadow_graph.jpg", bbox_inches='tight')
+    plt.savefig(f"results/dict/{name}_shadow_graph.jpg", bbox_inches='tight')
 
-    img = Image.open("results/dict/shadow_graph.jpg")
+    img = Image.open(f"results/dict/{name}_shadow_graph.jpg")
     img_arr = np.array(img)
     images = wandb.Image(
         img_arr, 
