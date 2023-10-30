@@ -287,17 +287,17 @@ def draw_full(tar_g:dgl.DGLGraph, sha_g:dgl.DGLGraph, model:torch.nn.Module, pat
 
         pos_pos = np.random.normal(loc=5.0, scale=1.0, size=(len(id_pos_tar), 2))
         pos_pos = list(zip(pos_pos[:,0], pos_pos[:,1]))
-        pos_tar_pos = dict(zip(id_pos_tar, pos_pos))
+        pos_tar = dict(zip(id_pos_tar, pos_pos))
 
 
         pos_neg = np.random.normal(loc=2.0, scale=0.5, size=(len(id_neg_tar), 2))
         pos_neg = list(zip(pos_neg[:,0], pos_neg[:,1]))
         pos_tar_neg = dict(zip(id_neg_tar, pos_neg))
 
-        print(f"Target pos:",pretty_repr(pos_tar_pos))
-        print(f"Target neg:",pretty_repr(pos_tar_neg))
+        # print(f"Target pos:",pretty_repr(pos_tar_pos))
+        # print(f"Target neg:",pretty_repr(pos_tar_neg))
 
-        pos_tar = pos_tar_pos.update(pos_tar_neg)
+        pos_tar.update(pos_tar_neg)
 
         # shadow graph
         pos_mask = sha_g.ndata['tr_mask']
@@ -307,17 +307,17 @@ def draw_full(tar_g:dgl.DGLGraph, sha_g:dgl.DGLGraph, model:torch.nn.Module, pat
 
         pos_pos = np.random.normal(loc=-1.0, scale=0.5, size=(len(id_pos_sha), 2))
         pos_pos = list(zip(pos_pos[:,0], pos_pos[:,1]))
-        pos_sha_pos = dict(zip(id_pos_sha, pos_pos))
+        pos_sha = dict(zip(id_pos_sha, pos_pos))
 
 
         pos_neg = np.random.normal(loc=-2.0, scale=0.5, size=(len(id_neg_sha), 2))
         pos_neg = list(zip(pos_neg[:,0], pos_neg[:,1]))
         pos_sha_neg = dict(zip(id_neg_sha, pos_neg))
 
-        print(f"Shadow pos:",pretty_repr(pos_sha_pos))
-        print(f"Shadow neg:",pretty_repr(pos_sha_neg))
+        # print(f"Shadow pos:",pretty_repr(pos_sha_pos))
+        # print(f"Shadow neg:",pretty_repr(pos_sha_neg))
 
-        pos_sha = pos_sha_pos.update(pos_sha_neg)
+        pos_sha.update(pos_sha_neg)
 
         pos = {
             'tar': pos_tar,
