@@ -69,6 +69,7 @@ def run(args, current_time, device):
         console.log(f"Target model's configuration: {model}")
 
     if exist_model == False:
+        tr_loader, va_loader, te_loader = init_loader(args=args, device=device, graph=tar_g)
         if args.debug == 1:
             pos_mask = tar_g.ndata['tr_mask']
             neg_mask = tar_g.ndata['te_mask']
@@ -76,9 +77,6 @@ def run(args, current_time, device):
             id_te = (neg_mask == 1).nonzero(as_tuple=True)[0]
             idx = torch.cat((id_tr, id_te), dim=0)
             tar_g = tar_g.subgraph(idx)
-
-
-        tr_loader, va_loader, te_loader = init_loader(args=args, device=device, graph=tar_g)
         model, model_hist = train(args=args, tr_loader=tr_loader, va_loader=va_loader, tar_g=tar_g, sha_g=sha_g, model=model, device=device, 
                                   history=model_hist, name=name['model'], name_pos=args.proj_name)
         evaluate(args=args, te_loader=te_loader, model=model, device=device, history=model_hist)
