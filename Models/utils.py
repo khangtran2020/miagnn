@@ -90,7 +90,7 @@ def draw_conf(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:torch.
     if os.path.exists(path=path):
         pos = read_pickel(path)
     else:
-        pos = nx.kamada_kawai_layout(G)
+        pos = nx.spring_layout(G)
         save_dict(path=path, dct=pos)
 
     plt.figure(num=None, figsize=(15, 15))
@@ -158,7 +158,7 @@ def draw_loss_grad(graph:dgl.DGLGraph, model:torch.nn.Module, path:str, device:t
     if os.path.exists(path=path):
         pos = read_pickel(path)
     else:
-        pos = nx.kamada_kawai_layout(G)
+        pos = nx.spring_layout(G)
         save_dict(path=path, dct=pos)
 
     plt.figure(num=None, figsize=(15, 15))
