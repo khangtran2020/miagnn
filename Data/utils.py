@@ -315,22 +315,21 @@ def shadow_visualization(graph:dgl.DGLGraph, path:str, name:str):
         pos_postr_y = np.random.normal(loc=1.0, scale=0.5, size=len(id_postr))
         pos_postr = list(zip(pos_postr_x, pos_postr_y))
         pos = dict(zip(id_postr, pos_postr))
-        print(pos)
 
         pos_negtr_x = np.random.normal(loc=-1.0, scale=0.5, size=len(id_negtr))
         pos_negtr_y = np.random.normal(loc=-1.0, scale=0.5, size=len(id_negtr))
         pos_negtr = list(zip(pos_negtr_x, pos_negtr_y))
-        pos.update(pos_negtr)
+        pos.update(dict(zip(id_negtr, pos_negtr)))
 
         pos_poste_x = np.random.normal(loc=1.0, scale=0.5, size=len(id_poste))
         pos_poste_y = np.random.normal(loc=1.0, scale=0.5, size=len(id_poste))
         pos_poste = list(zip(pos_poste_x, pos_poste_y))
-        pos.update(pos_poste)
+        pos.update(dict(zip(id_poste, pos_poste)))
 
         pos_negte_x = np.random.normal(loc=1.0, scale=0.5, size=len(id_negte))
         pos_negte_y = np.random.normal(loc=-1.0, scale=0.5, size=len(id_negte))
         pos_negte = list(zip(pos_negte_x, pos_negte_y))
-        pos.update(pos_negte)
+        pos.update(dict(zip(id_negte, pos_negte)))
         save_dict(path=path, dct=pos)
 
     plt.figure(num=None, figsize=(15, 15))
